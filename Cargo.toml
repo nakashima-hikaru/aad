@@ -1,0 +1,15 @@
+[package]
+name = "aad"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+num-traits = "0.2.19"
+
+[dev-dependencies]
+criterion = "0.5.1"
+rustograd = { git = "https://github.com/msakuta/rustograd" }
+
+[[bench]]
+name = "benchmark"
+harness = false
