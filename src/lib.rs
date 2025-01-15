@@ -70,6 +70,7 @@ mod tests {
 
     #[test]
     fn test_combined_operations2() {
+        // Test case from `Modern Computational Finance: AAD and Parallel Simulations` by Antoine Savine
         const MULTIPLIER: f64 = 5.0;
         const TOLERANCE: f64 = 1e-6;
 

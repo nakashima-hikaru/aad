@@ -1,6 +1,8 @@
-# Automatic Adjoint Differentiation
+# AAD
 
-The `aad` crate provides tools for implementing adjoint(a.k.a. reverse-mode) automatic differentiation in Rust. It
+---
+
+This crate provides tools for implementing adjoint(a.k.a. reverse-mode) automatic differentiation in Rust. It
 enables gradient computation for scalar values through a flexible and extensible API.
 
 - **User-Friendly Design**: Equations can be manipulated as seamlessly as primitive floating-point types.
@@ -9,6 +11,8 @@ enables gradient computation for scalar values through a flexible and extensible
     - Benchmarks show it is up to **9x faster** compared to `rustograd`.
 
 ## Quick Start
+
+---
 
 Here's an example of how to use the library:
 
@@ -33,6 +37,8 @@ fn main() {
 ```
 
 ## License
+
+---
 
 This project is licensed under the [MIT License](LICENSE).
 
