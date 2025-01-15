@@ -1,7 +1,8 @@
-use crate::core::operations::{BinaryFn, BinaryFnPayload, UnaryFn, UnaryFnPayload};
-use crate::core::operations::{Operation, ScalarFnPayload};
+use crate::core::operations::Operation;
+use crate::core::operations::{
+    Arithmetic, BinaryFn, BinaryFnPayload, Derive, UnaryFn, UnaryFnPayload,
+};
 use crate::core::tape::Tape;
-use num_traits::One;
 use std::ops::{Add, Mul};
 
 #[derive(Clone, Copy)]
@@ -23,7 +24,7 @@ impl<'a> Var<'a> {
         unsafe {
             let grads = &mut (*self.tape.grads.get());
             grads.resize((*self.tape.values.get()).len(), 0.0);
-            grads.get_unchecked_mut(self.idx).set_one();
+            *grads.get_unchecked_mut(self.idx) += 1.0;
         }
         self.tape.replay();
     }
@@ -52,7 +53,7 @@ impl<'a> Var<'a> {
             let payload = UnaryFnPayload {
                 x: self.idx,
                 y: idx,
-                dfdx: df,
+                dfdx: Derive::Fn(df),
             };
 
             self.tape.record(Operation::UnaryFn(payload));
@@ -124,13 +125,13 @@ impl<'a> Add<f64> for Var<'a> {
             let res = *v.get_unchecked(self.idx) + scalar;
             v.push(res);
 
-            let payload = ScalarFnPayload {
+            let payload = UnaryFnPayload {
                 x: self.idx,
                 y: idx,
-                scalar,
+                dfdx: Derive::Scalar(1.0, Arithmetic::Add),
             };
 
-            self.tape.record(Operation::ScalarAddFn(payload));
+            self.tape.record(Operation::UnaryFn(payload));
             result
         }
     }
@@ -159,13 +160,13 @@ impl<'a> Mul<f64> for Var<'a> {
             let res = *v.get_unchecked(self.idx) * scalar;
             v.push(res);
 
-            let payload = ScalarFnPayload {
+            let payload = UnaryFnPayload {
                 x: self.idx,
                 y: idx,
-                scalar,
+                dfdx: Derive::Scalar(scalar, Arithmetic::Mul),
             };
 
-            self.tape.record(Operation::ScalarMultiplyFn(payload));
+            self.tape.record(Operation::UnaryFn(payload));
             result
         }
     }

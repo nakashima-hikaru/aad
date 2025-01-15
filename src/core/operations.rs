@@ -7,8 +7,6 @@ pub(crate) type UnaryFn<T> = fn(T) -> T;
 pub(crate) enum Operation {
     UnaryFn(UnaryFnPayload),
     BinaryFn(BinaryFnPayload),
-    ScalarMultiplyFn(ScalarFnPayload),
-    ScalarAddFn(ScalarFnPayload),
 }
 
 impl Operation {
@@ -19,9 +17,19 @@ impl Operation {
                 let x = *values.get_unchecked(payload.x);
                 let grads = &mut *tape.grads.get();
                 let grad = *grads.get_unchecked(payload.y);
-                grads
-                    .get_unchecked_mut(payload.x)
-                    .add_assign((payload.dfdx)(x) * grad);
+                match payload.dfdx {
+                    Derive::Fn(dfdx) => {
+                        grads
+                            .get_unchecked_mut(payload.x)
+                            .add_assign(dfdx(x) * grad);
+                    }
+                    Derive::Scalar(scalar, Arithmetic::Add) => {
+                        grads.get_unchecked_mut(payload.x).add_assign(scalar);
+                    }
+                    Derive::Scalar(scalar, Arithmetic::Mul) => {
+                        grads.get_unchecked_mut(payload.x).add_assign(scalar * grad);
+                    }
+                }
             },
             Operation::BinaryFn(payload) => unsafe {
                 let values = &*tape.values.get();
@@ -38,32 +46,22 @@ impl Operation {
                     .get_unchecked_mut(payload.y)
                     .add_assign((payload.dfdy)(x, y) * grad);
             },
-            Operation::ScalarMultiplyFn(payload) => unsafe {
-                let grads = &mut *tape.grads.get();
-                let grad = *grads.get_unchecked(payload.y);
-                grads
-                    .get_unchecked_mut(payload.x)
-                    .add_assign(payload.scalar * grad);
-            },
-            Operation::ScalarAddFn(payload) => unsafe {
-                let grads = &mut *tape.grads.get();
-                let grad = *grads.get_unchecked(payload.y);
-                grads.get_unchecked_mut(payload.x).add_assign(grad);
-            },
         }
     }
 }
 
+pub(crate) enum Arithmetic {
+    Add,
+    Mul,
+}
+pub(crate) enum Derive {
+    Fn(UnaryFn<f64>),
+    Scalar(f64, Arithmetic),
+}
 pub(crate) struct UnaryFnPayload {
     pub x: usize,
     pub y: usize,
-    pub dfdx: UnaryFn<f64>,
-}
-
-pub(crate) struct ScalarFnPayload {
-    pub x: usize,
-    pub y: usize,
-    pub scalar: f64,
+    pub dfdx: Derive,
 }
 
 pub(crate) struct BinaryFnPayload {
