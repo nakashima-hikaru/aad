@@ -1,7 +1,11 @@
 [package]
 name = "aad"
 version = "0.1.0"
+authors = ["Hikaru Nakashima <nakashima.alg57@gmail.com>"]
+description = "Automatic adjoint differentiation library"
 edition = "2021"
+repository = "https://github.com/nakashima-hikaru/aad"
+license-file = "LICENSE"
 
 [dependencies]
 num-traits = "0.2.19"

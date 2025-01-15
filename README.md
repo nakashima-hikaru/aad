@@ -1,7 +1,5 @@
 # AAD
 
----
-
 This crate provides tools for implementing adjoint(a.k.a. reverse-mode) automatic differentiation in Rust. It
 enables gradient computation for scalar values through a flexible and extensible API.
 
@@ -12,7 +10,6 @@ enables gradient computation for scalar values through a flexible and extensible
 
 ## Quick Start
 
----
 
 Here's an example of how to use the library:
 
@@ -37,8 +34,6 @@ fn main() {
 ```
 
 ## License
-
----
 
 This project is licensed under the [MIT License](LICENSE).
 
