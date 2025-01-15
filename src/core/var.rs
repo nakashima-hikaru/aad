@@ -1,7 +1,5 @@
-use crate::core::operations::Operation;
-use crate::core::operations::{
-    Arithmetic, BinaryFn, BinaryFnPayload, Derive, UnaryFn, UnaryFnPayload,
-};
+use crate::core::operations::{BinaryFn, BinaryFnPayload, UnaryFn, UnaryFnPayload};
+use crate::core::operations::{Operation, ScalarFnPayload};
 use crate::core::tape::Tape;
 use std::ops::{Add, Mul};
 
@@ -53,10 +51,10 @@ impl<'a> Var<'a> {
             let payload = UnaryFnPayload {
                 x: self.idx,
                 y: idx,
-                dfdx: Derive::Fn(df),
+                dfdx: df,
             };
 
-            self.tape.record(Operation::UnaryFn(payload));
+            self.tape.record(Operation::Unary(payload));
             result
         }
     }
@@ -88,7 +86,7 @@ impl<'a> Var<'a> {
                 dfdy,
             };
 
-            self.tape.record(Operation::BinaryFn(payload));
+            self.tape.record(Operation::Binary(payload));
             result
         }
     }
@@ -125,13 +123,14 @@ impl<'a> Add<f64> for Var<'a> {
             let res = *v.get_unchecked(self.idx) + scalar;
             v.push(res);
 
-            let payload = UnaryFnPayload {
+            let payload = ScalarFnPayload {
                 x: self.idx,
                 y: idx,
-                dfdx: Derive::Scalar(1.0, Arithmetic::Add),
+                scalar,
+                dfdx: |_, _| 1.0,
             };
 
-            self.tape.record(Operation::UnaryFn(payload));
+            self.tape.record(Operation::Scalar(payload));
             result
         }
     }
@@ -160,13 +159,14 @@ impl<'a> Mul<f64> for Var<'a> {
             let res = *v.get_unchecked(self.idx) * scalar;
             v.push(res);
 
-            let payload = UnaryFnPayload {
+            let payload = ScalarFnPayload {
                 x: self.idx,
                 y: idx,
-                dfdx: Derive::Scalar(scalar, Arithmetic::Mul),
+                scalar,
+                dfdx: |s, _| s,
             };
 
-            self.tape.record(Operation::UnaryFn(payload));
+            self.tape.record(Operation::Scalar(payload));
             result
         }
     }
