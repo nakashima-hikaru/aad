@@ -1,6 +1,6 @@
 use crate::core::operations::Operation;
-use std::cell::UnsafeCell;
 use crate::core::var::Var;
+use std::cell::UnsafeCell;
 
 #[derive(Default)]
 pub struct Tape {

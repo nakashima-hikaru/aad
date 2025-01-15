@@ -20,6 +20,19 @@ mod tests {
     }
 
     #[test]
+    fn test_add_scalar() {
+        let tape = Tape::default();
+        let x = tape.var(2.0);
+        let z = x + 5.0;
+
+        assert_eq!(z.value(), 7.0);
+
+        z.backward();
+
+        assert_eq!(x.grad(), 1.0);
+    }
+
+    #[test]
     fn test_mul() {
         let tape = Tape::default();
         let x = tape.var(2.0);
@@ -32,6 +45,32 @@ mod tests {
 
         assert_eq!(x.grad(), 3.0);
         assert_eq!(y.grad(), 2.0);
+    }
+
+    #[test]
+    fn test_mul_scalar() {
+        let tape = Tape::default();
+        let x = tape.var(2.0);
+        let z = x * 5.0;
+
+        assert_eq!(z.value(), 10.0);
+
+        z.backward();
+
+        assert_eq!(x.grad(), 5.0);
+    }
+
+    #[test]
+    fn test_linear_scalar() {
+        let tape = Tape::default();
+        let x = tape.var(2.0);
+        let z = 2.0 * x + 5.0;
+
+        assert_eq!(z.value(), 9.0);
+
+        z.backward();
+
+        assert_eq!(x.grad(), 2.0);
     }
 
     #[test]

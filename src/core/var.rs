@@ -1,8 +1,8 @@
-use std::ops::{Add, Mul};
-use num_traits::One;
-use crate::core::operations::Operation;
+use crate::core::operations::{BinaryFn, BinaryFnPayload, UnaryFn, UnaryFnPayload};
+use crate::core::operations::{Operation, ScalarFnPayload};
 use crate::core::tape::Tape;
-use crate::core::operations::{BinaryFn, UnaryFn, BinaryFnPayload, UnaryFnPayload};
+use num_traits::One;
+use std::ops::{Add, Mul};
 
 #[derive(Clone, Copy)]
 pub struct Var<'a> {
@@ -109,12 +109,65 @@ impl<'a> Mul<Var<'a>> for Var<'a> {
     }
 }
 
+impl<'a> Add<f64> for Var<'a> {
+    type Output = Var<'a>;
+
+    fn add(self, scalar: f64) -> Var<'a> {
+        unsafe {
+            let idx = (*self.tape.values.get()).len();
+            let result = Var {
+                idx,
+                tape: self.tape,
+            };
+
+            let v = &mut (*self.tape.values.get());
+            let res = *v.get_unchecked(self.idx) + scalar;
+            v.push(res);
+
+            let payload = ScalarFnPayload {
+                x: self.idx,
+                y: idx,
+                scalar,
+            };
+
+            self.tape.record(Operation::ScalarAddFn(payload));
+            result
+        }
+    }
+}
+
+impl<'a> Add<Var<'a>> for f64 {
+    type Output = Var<'a>;
+
+    fn add(self, var: Var<'a>) -> Var<'a> {
+        var + self
+    }
+}
+
 impl<'a> Mul<f64> for Var<'a> {
     type Output = Var<'a>;
 
     fn mul(self, scalar: f64) -> Var<'a> {
-        let const_var = self.tape.var(scalar);
-        const_var * self
+        unsafe {
+            let idx = (*self.tape.values.get()).len();
+            let result = Var {
+                idx,
+                tape: self.tape,
+            };
+
+            let v = &mut (*self.tape.values.get());
+            let res = *v.get_unchecked(self.idx) * scalar;
+            v.push(res);
+
+            let payload = ScalarFnPayload {
+                x: self.idx,
+                y: idx,
+                scalar,
+            };
+
+            self.tape.record(Operation::ScalarMultiplyFn(payload));
+            result
+        }
     }
 }
 

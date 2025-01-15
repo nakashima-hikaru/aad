@@ -1,5 +1,5 @@
-use std::ops::AddAssign;
 use crate::core::tape::Tape;
+use std::ops::AddAssign;
 
 pub(crate) type BinaryFn<T> = fn(T, T) -> T;
 pub(crate) type UnaryFn<T> = fn(T) -> T;
@@ -7,6 +7,8 @@ pub(crate) type UnaryFn<T> = fn(T) -> T;
 pub(crate) enum Operation {
     UnaryFn(UnaryFnPayload),
     BinaryFn(BinaryFnPayload),
+    ScalarMultiplyFn(ScalarFnPayload),
+    ScalarAddFn(ScalarFnPayload),
 }
 
 impl Operation {
@@ -17,7 +19,9 @@ impl Operation {
                 let x = *values.get_unchecked(payload.x);
                 let grads = &mut *tape.grads.get();
                 let grad = *grads.get_unchecked(payload.y);
-                grads.get_unchecked_mut(payload.x).add_assign((payload.dfdx)(x) * grad);
+                grads
+                    .get_unchecked_mut(payload.x)
+                    .add_assign((payload.dfdx)(x) * grad);
             },
             Operation::BinaryFn(payload) => unsafe {
                 let values = &*tape.values.get();
@@ -27,8 +31,24 @@ impl Operation {
                 let grads = &mut *tape.grads.get();
                 let grad = *grads.get_unchecked(payload.z);
 
-                grads.get_unchecked_mut(payload.x).add_assign((payload.dfdx)(x, y) * grad);
-                grads.get_unchecked_mut(payload.y).add_assign((payload.dfdy)(x, y) * grad);
+                grads
+                    .get_unchecked_mut(payload.x)
+                    .add_assign((payload.dfdx)(x, y) * grad);
+                grads
+                    .get_unchecked_mut(payload.y)
+                    .add_assign((payload.dfdy)(x, y) * grad);
+            },
+            Operation::ScalarMultiplyFn(payload) => unsafe {
+                let grads = &mut *tape.grads.get();
+                let grad = *grads.get_unchecked(payload.y);
+                grads
+                    .get_unchecked_mut(payload.x)
+                    .add_assign(payload.scalar * grad);
+            },
+            Operation::ScalarAddFn(payload) => unsafe {
+                let grads = &mut *tape.grads.get();
+                let grad = *grads.get_unchecked(payload.y);
+                grads.get_unchecked_mut(payload.x).add_assign(grad);
             },
         }
     }
@@ -38,6 +58,12 @@ pub(crate) struct UnaryFnPayload {
     pub x: usize,
     pub y: usize,
     pub dfdx: UnaryFn<f64>,
+}
+
+pub(crate) struct ScalarFnPayload {
+    pub x: usize,
+    pub y: usize,
+    pub scalar: f64,
 }
 
 pub(crate) struct BinaryFnPayload {
