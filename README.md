@@ -14,7 +14,7 @@ enables gradient computation for scalar values through a flexible and extensible
 Here's an example of how to use the library:
 
 ```rust
-use aad::core::tape::Tape;
+use aad::tape::Tape;
 
 fn main() {
     let tape = Tape::default();

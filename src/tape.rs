@@ -1,5 +1,5 @@
-use crate::core::operations::Operation;
-use crate::core::var::Var;
+use crate::operations::Operation;
+use crate::var::Var;
 use std::cell::UnsafeCell;
 
 #[derive(Default)]
@@ -18,6 +18,7 @@ impl Tape {
         }
     }
 
+    #[inline(always)]
     pub(crate) fn record(&self, operation: Operation) {
         unsafe {
             (*self.operations.get()).push(operation);
@@ -26,9 +27,8 @@ impl Tape {
 
     pub(crate) fn replay(&self) {
         unsafe {
-            let ops = &(*self.operations.get());
-            for operation in ops.iter().rev() {
-                operation.backward(self);
+            for operation in (*self.operations.get()).iter().rev() {
+                operation.backward(&mut *self.grads.get());
             }
         }
     }

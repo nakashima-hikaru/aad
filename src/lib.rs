@@ -1,8 +1,10 @@
-pub mod core;
+pub(crate) mod operations;
+pub mod tape;
+pub(crate) mod var;
 
 #[cfg(test)]
 mod tests {
-    use crate::core::tape::Tape;
+    use crate::tape::Tape;
     use std::hint::black_box;
 
     #[test]

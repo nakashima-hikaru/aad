@@ -1,4 +1,4 @@
-use aad::core::tape::Tape;
+use aad::tape::Tape;
 use criterion::{criterion_group, criterion_main, Criterion};
 use std::hint::black_box;
 
@@ -48,7 +48,7 @@ fn large_computation_graph_benchmark_f64(c: &mut Criterion) {
 fn large_computation_graph_benchmark_rustograd(c: &mut Criterion) {
     c.bench_function("large_computation_graph_rustograd", |b| {
         b.iter(|| {
-            let tape = rustograd::Tape::new();
+            let tape = rustograd::Tape::default();
 
             let x0 = tape.term("x0", 1.0);
             let x1 = tape.term("x1", 2.0);

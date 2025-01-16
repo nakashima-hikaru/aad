@@ -1,6 +1,6 @@
-use crate::core::operations::Operation;
-use crate::core::operations::{BinaryFn, BinaryFnPayload, UnaryFn, UnaryFnPayload};
-use crate::core::tape::Tape;
+use crate::operations::Operation;
+use crate::operations::{BinaryFn, BinaryFnPayload, UnaryFn, UnaryFnPayload};
+use crate::tape::Tape;
 use std::ops::{Add, Mul};
 
 #[derive(Clone, Copy)]
@@ -38,15 +38,15 @@ impl<'a> Var<'a> {
     #[inline(always)]
     fn define_unary_fn(&self, f: UnaryFn<f64>, df: UnaryFn<f64>) -> Var<'a> {
         unsafe {
-            let idx = (*self.tape.values.get()).len();
+            let values = self.tape.values.get();
+            let idx = (*values).len();
             let result = Var {
                 idx,
                 tape: self.tape,
             };
 
-            let v = &mut (*self.tape.values.get());
-            let x = *v.get_unchecked(self.idx);
-            v.push(f(x));
+            let x = *(*values).get_unchecked(self.idx);
+            (*values).push(f(x));
 
             let payload = UnaryFnPayload {
                 x: self.idx,
@@ -61,15 +61,15 @@ impl<'a> Var<'a> {
     #[inline(always)]
     fn define_scalar_fn(&self, f: BinaryFn<f64>, df: BinaryFn<f64>, scalar: f64) -> Var<'a> {
         unsafe {
-            let idx = (*self.tape.values.get()).len();
+            let values = self.tape.values.get();
+            let idx = (*values).len();
             let result = Var {
                 idx,
                 tape: self.tape,
             };
 
-            let v = &mut (*self.tape.values.get());
-            let x = *v.get_unchecked(self.idx);
-            v.push(f(scalar, x));
+            let x = *(*values).get_unchecked(self.idx);
+            (*values).push(f(scalar, x));
 
             let payload = UnaryFnPayload {
                 x: self.idx,
@@ -81,6 +81,7 @@ impl<'a> Var<'a> {
             result
         }
     }
+
     #[inline(always)]
     fn define_binary_fn(
         &self,
@@ -90,17 +91,17 @@ impl<'a> Var<'a> {
         dfdy: BinaryFn<f64>,
     ) -> Var<'a> {
         unsafe {
-            let idx = (*self.tape.values.get()).len();
+            let values = self.tape.values.get();
+            let idx = (*values).len();
             let result = Var {
                 idx,
                 tape: self.tape,
             };
 
-            let v = &mut (*self.tape.values.get());
-            let x = *v.get_unchecked(self.idx);
-            let y = *v.get_unchecked(other.idx);
+            let x = *(*values).get_unchecked(self.idx);
+            let y = *(*values).get_unchecked(other.idx);
             let res = f(x, y);
-            v.push(res);
+            (*values).push(res);
 
             let payload = BinaryFnPayload {
                 x: self.idx,
