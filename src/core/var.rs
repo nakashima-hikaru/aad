@@ -1,5 +1,5 @@
+use crate::core::operations::Operation;
 use crate::core::operations::{BinaryFn, BinaryFnPayload, UnaryFn, UnaryFnPayload};
-use crate::core::operations::{Operation, ScalarFnPayload};
 use crate::core::tape::Tape;
 use std::ops::{Add, Mul};
 
@@ -45,20 +45,42 @@ impl<'a> Var<'a> {
             };
 
             let v = &mut (*self.tape.values.get());
-            let res = f(*v.get_unchecked(self.idx));
-            v.push(res);
+            let x = *v.get_unchecked(self.idx);
+            v.push(f(x));
 
             let payload = UnaryFnPayload {
                 x: self.idx,
                 y: idx,
-                dfdx: df,
+                dfdx: df(x),
             };
 
             self.tape.record(Operation::Unary(payload));
             result
         }
     }
+    #[inline(always)]
+    fn define_scalar_fn(&self, f: BinaryFn<f64>, df: BinaryFn<f64>, scalar: f64) -> Var<'a> {
+        unsafe {
+            let idx = (*self.tape.values.get()).len();
+            let result = Var {
+                idx,
+                tape: self.tape,
+            };
 
+            let v = &mut (*self.tape.values.get());
+            let x = *v.get_unchecked(self.idx);
+            v.push(f(scalar, x));
+
+            let payload = UnaryFnPayload {
+                x: self.idx,
+                y: idx,
+                dfdx: df(scalar, x),
+            };
+
+            self.tape.record(Operation::Unary(payload));
+            result
+        }
+    }
     #[inline(always)]
     fn define_binary_fn(
         &self,
@@ -75,15 +97,17 @@ impl<'a> Var<'a> {
             };
 
             let v = &mut (*self.tape.values.get());
-            let res = f(*v.get_unchecked(self.idx), *v.get_unchecked(other.idx));
+            let x = *v.get_unchecked(self.idx);
+            let y = *v.get_unchecked(other.idx);
+            let res = f(x, y);
             v.push(res);
 
             let payload = BinaryFnPayload {
                 x: self.idx,
                 y: other.idx,
                 z: idx,
-                dfdx,
-                dfdy,
+                dfdx: dfdx(x, y),
+                dfdy: dfdy(x, y),
             };
 
             self.tape.record(Operation::Binary(payload));
@@ -112,27 +136,7 @@ impl<'a> Add<f64> for Var<'a> {
     type Output = Var<'a>;
 
     fn add(self, scalar: f64) -> Var<'a> {
-        unsafe {
-            let idx = (*self.tape.values.get()).len();
-            let result = Var {
-                idx,
-                tape: self.tape,
-            };
-
-            let v = &mut (*self.tape.values.get());
-            let res = *v.get_unchecked(self.idx) + scalar;
-            v.push(res);
-
-            let payload = ScalarFnPayload {
-                x: self.idx,
-                y: idx,
-                scalar,
-                dfdx: |_, _| 1.0,
-            };
-
-            self.tape.record(Operation::Scalar(payload));
-            result
-        }
+        self.define_scalar_fn(|s, x| s + x, |_, _| 1.0, scalar)
     }
 }
 
@@ -148,27 +152,7 @@ impl<'a> Mul<f64> for Var<'a> {
     type Output = Var<'a>;
 
     fn mul(self, scalar: f64) -> Var<'a> {
-        unsafe {
-            let idx = (*self.tape.values.get()).len();
-            let result = Var {
-                idx,
-                tape: self.tape,
-            };
-
-            let v = &mut (*self.tape.values.get());
-            let res = *v.get_unchecked(self.idx) * scalar;
-            v.push(res);
-
-            let payload = ScalarFnPayload {
-                x: self.idx,
-                y: idx,
-                scalar,
-                dfdx: |s, _| s,
-            };
-
-            self.tape.record(Operation::Scalar(payload));
-            result
-        }
+        self.define_scalar_fn(|s, x| s * x, |s, _| s, scalar)
     }
 }
 

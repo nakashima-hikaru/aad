@@ -17,14 +17,30 @@ fn large_computation_graph_benchmark(c: &mut Criterion) {
             for _ in 0..10000 {
                 result = (((result + x1) * x2.sin()) + (x3 * x4.ln())) * x2;
             }
-
+            black_box(result);
             result.backward();
 
-            black_box(x0.grad());
-            black_box(x1.grad());
-            black_box(x2.grad());
-            black_box(x3.grad());
-            black_box(x4.grad());
+            black_box(result);
+        })
+    });
+}
+
+fn large_computation_graph_benchmark_f64(c: &mut Criterion) {
+    c.bench_function("large_computation_graph_f64", |b| {
+        b.iter(|| {
+            let x0 = 1.0_f64;
+            let x1 = 2.0_f64;
+            let x2 = 3.0_f64;
+            let x3 = 4.0_f64;
+            let x4 = 5.0_f64;
+
+            let mut result = x0.clone();
+            for _ in 0..10000 {
+                result = (((result + x1) * x2.sin()) + (x3 * x4.ln())) * x2;
+                black_box(result);
+            }
+
+            black_box(result);
         })
     });
 }
@@ -63,6 +79,7 @@ fn large_computation_graph_benchmark_rustograd(c: &mut Criterion) {
 criterion_group!(
     benches,
     large_computation_graph_benchmark,
-    large_computation_graph_benchmark_rustograd
+    large_computation_graph_benchmark_rustograd,
+    large_computation_graph_benchmark_f64
 );
 criterion_main!(benches);

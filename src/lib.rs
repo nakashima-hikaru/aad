@@ -3,6 +3,7 @@ pub mod core;
 #[cfg(test)]
 mod tests {
     use crate::core::tape::Tape;
+    use std::hint::black_box;
 
     #[test]
     fn test_add() {
@@ -146,5 +147,29 @@ mod tests {
                 actual
             );
         }
+    }
+
+    #[test]
+    fn large_computation_graph_benchmark() {
+        let tape = Tape::default();
+
+        let x0 = tape.var(1.0);
+        let x1 = tape.var(2.0);
+        let x2 = tape.var(3.0);
+        let x3 = tape.var(4.0);
+        let x4 = tape.var(5.0);
+
+        let mut result = x0.clone();
+        for _ in 0..1000000 {
+            result = (((result + x1) * x2.sin()) + (x3 * x4.ln())) * x2;
+        }
+
+        result.backward();
+
+        black_box(x0.grad());
+        black_box(x1.grad());
+        black_box(x2.grad());
+        black_box(x3.grad());
+        black_box(x4.grad());
     }
 }
