@@ -12,8 +12,9 @@ pub struct Tape {
 impl Tape {
     pub fn var(&self, value: f64) -> Var {
         unsafe {
-            let idx = (*self.values.get()).len();
-            (*self.values.get()).push(value);
+            let values = &mut *self.values.get();
+            let idx = (*values).len();
+            (*values).push(value);
             Var { idx, tape: self }
         }
     }
