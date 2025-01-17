@@ -1,7 +1,18 @@
 use std::ops::AddAssign;
 
-pub(crate) type BinaryFn<T> = fn(T, T) -> T;
-pub(crate) type UnaryFn<T> = fn(T) -> T;
+pub(crate) struct UnaryFnPayload {
+    pub x: usize,
+    pub y: usize,
+    pub dfdx: f64,
+}
+
+pub(crate) struct BinaryFnPayload {
+    pub x: usize,
+    pub y: usize,
+    pub z: usize,
+    pub dfdx: f64,
+    pub dfdy: f64,
+}
 
 pub(crate) enum Operation {
     Unary(UnaryFnPayload),
@@ -32,18 +43,4 @@ impl Operation {
             }
         }
     }
-}
-
-pub(crate) struct UnaryFnPayload {
-    pub x: usize,
-    pub y: usize,
-    pub dfdx: f64,
-}
-
-pub(crate) struct BinaryFnPayload {
-    pub x: usize,
-    pub y: usize,
-    pub z: usize,
-    pub dfdx: f64,
-    pub dfdy: f64,
 }

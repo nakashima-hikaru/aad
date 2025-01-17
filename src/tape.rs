@@ -6,7 +6,6 @@ use std::cell::UnsafeCell;
 pub struct Tape {
     operations: UnsafeCell<Vec<Operation>>,
     pub(crate) values: UnsafeCell<Vec<f64>>,
-    pub(crate) grads: UnsafeCell<Vec<f64>>,
 }
 
 impl Tape {
@@ -26,10 +25,10 @@ impl Tape {
         }
     }
 
-    pub(crate) fn replay(&self) {
+    pub(crate) fn replay(&self, grads: &mut [f64]) {
         unsafe {
             for operation in (*self.operations.get()).iter().rev() {
-                operation.backward(&mut *self.grads.get());
+                operation.backward(grads);
             }
         }
     }

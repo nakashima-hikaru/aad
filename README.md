@@ -7,7 +7,6 @@ enables gradient computation for scalar values through a flexible and extensible
     - This design draws heavy inspiration from the `rustograd` library.
 - **High Performance**: The library is designed to be both efficient and scalable, with minimal overhead.
     - Benchmarks show it is up to **4x faster** compared to `rustograd`.
-- **No Dependencies**: The library is self-contained and does not rely on any external dependencies.
 
 ## Quick Start
 
@@ -26,10 +25,8 @@ fn main() {
 
     println!("{}", z.value());
 
-    z.backward();
-
-    println!("Gradient of x: {}", x.grad());
-    println!("Gradient of y: {}", y.grad());
+    let grads = z.backward();
+    println!("Gradients are: {:?}", grads.get(&[x, y]));
 }
 ```
 
