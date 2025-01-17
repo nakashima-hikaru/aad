@@ -2,7 +2,7 @@ use crate::grads::Grads;
 use crate::operations::Operation;
 use crate::operations::{BinaryFnPayload, UnaryFnPayload};
 use crate::tape::Tape;
-use std::ops::{Add, Div, Mul, Neg, Sub};
+use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 
 #[derive(Clone, Copy)]
 pub struct Var<'a> {
@@ -51,7 +51,7 @@ impl<'a> Var<'a> {
     }
 
     pub fn sqrt(&self) -> Var<'a> {
-        self.custom_unary_fn(f64::sqrt, |x| 0.5 / x.sqrt())
+        self.custom_unary_fn(f64::sqrt, |x| 0.5 * x.sqrt().recip())
     }
 
     pub fn cos(&self) -> Var<'a> {
@@ -59,7 +59,7 @@ impl<'a> Var<'a> {
     }
 
     pub fn tan(&self) -> Var<'a> {
-        self.custom_unary_fn(f64::tan, |x| 1.0 / f64::cos(x).powi(2))
+        self.custom_unary_fn(f64::tan, |x| f64::cos(x).powi(2).recip())
     }
 
     pub fn sinh(&self) -> Var<'a> {
@@ -71,7 +71,7 @@ impl<'a> Var<'a> {
     }
 
     pub fn tanh(&self) -> Var<'a> {
-        self.custom_unary_fn(f64::tanh, |x| 1.0 / f64::cosh(x).powi(2))
+        self.custom_unary_fn(f64::tanh, |x| f64::cosh(x).powi(2).recip())
     }
 
     pub fn recip(&self) -> Var<'a> {
@@ -101,6 +101,8 @@ impl<'a> Var<'a> {
             result
         }
     }
+
+    #[inline(always)]
     pub fn custom_scalar_fn(&self, f: BinaryFn<f64>, df: BinaryFn<f64>, scalar: f64) -> Var<'a> {
         unsafe {
             let values = self.tape.values.get();
@@ -162,7 +164,26 @@ impl Neg for Var<'_> {
     type Output = Self;
 
     fn neg(self) -> Self::Output {
-        self.custom_unary_fn(|x| -x, |_| -1.0)
+        unsafe {
+            let values = self.tape.values.get();
+            let idx = (*values).len();
+            let result = Var {
+                idx,
+                tape: self.tape,
+            };
+
+            let x = *(*values).get_unchecked(self.idx);
+            (*values).push(-x);
+
+            let payload = UnaryFnPayload {
+                x: self.idx,
+                y: idx,
+                dfdx: -1.0,
+            };
+
+            self.tape.record(Operation::Unary(payload));
+            result
+        }
     }
 }
 
@@ -170,7 +191,29 @@ impl<'a> Add<Var<'a>> for Var<'a> {
     type Output = Self;
 
     fn add(self, other: Var<'a>) -> Self::Output {
-        self.custom_binary_fn(&other, |x, y| x + y, |_, _| 1.0, |_, _| 1.0)
+        unsafe {
+            let values = self.tape.values.get();
+            let idx = (*values).len();
+            let result = Var {
+                idx,
+                tape: self.tape,
+            };
+
+            let x = *(*values).get_unchecked(self.idx);
+            let y = *(*values).get_unchecked(other.idx);
+            (*values).push(x + y);
+
+            let payload = BinaryFnPayload {
+                x: self.idx,
+                y: other.idx,
+                z: idx,
+                dfdx: 1.0,
+                dfdy: 1.0,
+            };
+
+            self.tape.record(Operation::Binary(payload));
+            result
+        }
     }
 }
 
@@ -178,7 +221,29 @@ impl<'a> Sub<Var<'a>> for Var<'a> {
     type Output = Self;
 
     fn sub(self, other: Var<'a>) -> Self::Output {
-        self.custom_binary_fn(&other, |x, y| x - y, |_, _| 1.0, |_, _| -1.0)
+        unsafe {
+            let values = self.tape.values.get();
+            let idx = (*values).len();
+            let result = Var {
+                idx,
+                tape: self.tape,
+            };
+
+            let x = *(*values).get_unchecked(self.idx);
+            let y = *(*values).get_unchecked(other.idx);
+            (*values).push(x - y);
+
+            let payload = BinaryFnPayload {
+                x: self.idx,
+                y: other.idx,
+                z: idx,
+                dfdx: 1.0,
+                dfdy: -1.0,
+            };
+
+            self.tape.record(Operation::Binary(payload));
+            result
+        }
     }
 }
 
@@ -186,7 +251,29 @@ impl<'a> Mul<Var<'a>> for Var<'a> {
     type Output = Self;
 
     fn mul(self, other: Var<'a>) -> Self::Output {
-        self.custom_binary_fn(&other, |x, y| x * y, |_, y| y, |x, _| x)
+        unsafe {
+            let values = self.tape.values.get();
+            let idx = (*values).len();
+            let result = Var {
+                idx,
+                tape: self.tape,
+            };
+
+            let x = *(*values).get_unchecked(self.idx);
+            let y = *(*values).get_unchecked(other.idx);
+            (*values).push(x * y);
+
+            let payload = BinaryFnPayload {
+                x: self.idx,
+                y: other.idx,
+                z: idx,
+                dfdx: y,
+                dfdy: x,
+            };
+
+            self.tape.record(Operation::Binary(payload));
+            result
+        }
     }
 }
 
@@ -202,7 +289,26 @@ impl<'a> Add<f64> for Var<'a> {
     type Output = Var<'a>;
 
     fn add(self, scalar: f64) -> Var<'a> {
-        self.custom_scalar_fn(|s, x| s + x, |_, _| 1.0, scalar)
+        unsafe {
+            let values = self.tape.values.get();
+            let idx = (*values).len();
+            let result = Var {
+                idx,
+                tape: self.tape,
+            };
+
+            let x = *(*values).get_unchecked(self.idx);
+            (*values).push(scalar + x);
+
+            let payload = UnaryFnPayload {
+                x: self.idx,
+                y: idx,
+                dfdx: 1.0,
+            };
+
+            self.tape.record(Operation::Unary(payload));
+            result
+        }
     }
 }
 
@@ -218,7 +324,26 @@ impl<'a> Sub<f64> for Var<'a> {
     type Output = Var<'a>;
 
     fn sub(self, scalar: f64) -> Self::Output {
-        self.custom_scalar_fn(|s, x| x - s, |_, _| 1.0, scalar)
+        unsafe {
+            let values = self.tape.values.get();
+            let idx = (*values).len();
+            let result = Var {
+                idx,
+                tape: self.tape,
+            };
+
+            let x = *(*values).get_unchecked(self.idx);
+            (*values).push(x - scalar);
+
+            let payload = UnaryFnPayload {
+                x: self.idx,
+                y: idx,
+                dfdx: 1.0,
+            };
+
+            self.tape.record(Operation::Unary(payload));
+            result
+        }
     }
 }
 
@@ -234,7 +359,26 @@ impl<'a> Mul<f64> for Var<'a> {
     type Output = Var<'a>;
 
     fn mul(self, scalar: f64) -> Var<'a> {
-        self.custom_scalar_fn(|s, x| s * x, |s, _| s, scalar)
+        unsafe {
+            let values = self.tape.values.get();
+            let idx = (*values).len();
+            let result = Var {
+                idx,
+                tape: self.tape,
+            };
+
+            let x = *(*values).get_unchecked(self.idx);
+            (*values).push(scalar * x);
+
+            let payload = UnaryFnPayload {
+                x: self.idx,
+                y: idx,
+                dfdx: scalar,
+            };
+
+            self.tape.record(Operation::Unary(payload));
+            result
+        }
     }
 }
 
@@ -250,7 +394,26 @@ impl<'a> Div<f64> for Var<'a> {
     type Output = Var<'a>;
 
     fn div(self, scalar: f64) -> Var<'a> {
-        self.custom_scalar_fn(|s, x| x / s, |s, _| 1.0 / s, scalar)
+        unsafe {
+            let values = self.tape.values.get();
+            let idx = (*values).len();
+            let result = Var {
+                idx,
+                tape: self.tape,
+            };
+
+            let x = *(*values).get_unchecked(self.idx);
+            (*values).push(x / scalar);
+
+            let payload = UnaryFnPayload {
+                x: self.idx,
+                y: idx,
+                dfdx: scalar.recip(),
+            };
+
+            self.tape.record(Operation::Unary(payload));
+            result
+        }
     }
 }
 
@@ -260,5 +423,53 @@ impl<'a> Div<Var<'a>> for f64 {
 
     fn div(self, var: Var<'a>) -> Var<'a> {
         var.recip() * self
+    }
+}
+
+impl AddAssign<f64> for Var<'_> {
+    fn add_assign(&mut self, scalar: f64) {
+        *self = *self + scalar
+    }
+}
+
+impl<'a> AddAssign<Var<'a>> for Var<'a> {
+    fn add_assign(&mut self, other: Var<'a>) {
+        *self = *self + other
+    }
+}
+
+impl SubAssign<f64> for Var<'_> {
+    fn sub_assign(&mut self, scalar: f64) {
+        *self = *self - scalar
+    }
+}
+
+impl<'a> SubAssign<Var<'a>> for Var<'a> {
+    fn sub_assign(&mut self, other: Var<'a>) {
+        *self = *self - other
+    }
+}
+
+impl MulAssign<f64> for Var<'_> {
+    fn mul_assign(&mut self, scalar: f64) {
+        *self = *self * scalar
+    }
+}
+
+impl<'a> MulAssign<Var<'a>> for Var<'a> {
+    fn mul_assign(&mut self, other: Var<'a>) {
+        *self = *self * other
+    }
+}
+
+impl DivAssign<f64> for Var<'_> {
+    fn div_assign(&mut self, scalar: f64) {
+        *self = *self / scalar
+    }
+}
+
+impl<'a> DivAssign<Var<'a>> for Var<'a> {
+    fn div_assign(&mut self, other: Var<'a>) {
+        *self = *self / other
     }
 }
