@@ -1,6 +1,6 @@
+use crate::operations::Operation;
 use crate::var::Var;
 use std::cell::UnsafeCell;
-use crate::operations::Operation;
 
 #[derive(Default)]
 pub struct Tape {
@@ -22,7 +22,7 @@ impl Tape {
         }
     }
 
-    #[inline(always)]
+    #[inline]
     pub(crate) fn record(&self, operation: Operation) {
         unsafe {
             (*self.operations.get()).push(operation);
@@ -34,9 +34,9 @@ impl Tape {
         unsafe {
             for (i, operation) in (*self.operations.get()).iter().rev().enumerate() {
                 let grad = *grads.get_unchecked(count - i - 1);
-                // if grad == 0.0 {
-                //     continue;
-                // }
+                if grad == 0.0 {
+                    continue;
+                }
                 operation.backward(grads, grad);
             }
         }
