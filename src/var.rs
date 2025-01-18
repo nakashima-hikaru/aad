@@ -27,7 +27,17 @@ impl<'a> Var<'a> {
             let count = *self.tape.count.get();
             let mut grads = vec![0.0; count];
             *grads.get_unchecked_mut(self.idx) = 1.0;
-            self.tape.replay(&mut grads, count);
+
+            for (i, operation) in (*self.tape.operations.get()).iter().rev().enumerate() {
+                let grad = *grads.get_unchecked(count - i - 1);
+                if grad == 0.0 {
+                    continue;
+                }
+                for i in 0..2 {
+                    *grads.get_unchecked_mut(operation.x[i]) += operation.dfdx[i] * grad;
+                }
+            }
+
             Grads(grads)
         }
     }
@@ -120,14 +130,12 @@ impl<'a> Var<'a> {
                 value: f(self.value, scalar),
             };
 
-            let payload = Operation {
-                x: [self.idx, 0],
-                dfdx: [df(self.value, scalar), 0.0],
-            };
-
             *count += 1;
 
-            self.tape.record(payload);
+            self.tape.record(Operation {
+                x: [self.idx, 0],
+                dfdx: [df(self.value, scalar), 0.0],
+            });
             result
         }
     }
@@ -142,21 +150,18 @@ impl<'a> Var<'a> {
     ) -> Var<'a> {
         unsafe {
             let count = self.tape.count.get();
-            let idx = count;
             let result = Var {
-                idx: *idx,
+                idx: *count,
                 tape: self.tape,
                 value: f(self.value(), other.value),
             };
 
-            let payload = Operation {
-                x: [self.idx, other.idx],
-                dfdx: [dfdx(self.value, other.value), dfdy(self.value, other.value)],
-            };
-
             *count += 1;
 
-            self.tape.record(payload);
+            self.tape.record(Operation {
+                x: [self.idx, other.idx],
+                dfdx: [dfdx(self.value, other.value), dfdy(self.value, other.value)],
+            });
             result
         }
     }
@@ -174,14 +179,12 @@ impl Neg for Var<'_> {
                 value: -self.value,
             };
 
-            let payload = Operation {
-                x: [self.idx, 0],
-                dfdx: [-1.0, 0.0],
-            };
-
             *count += 1;
 
-            self.tape.record(payload);
+            self.tape.record(Operation {
+                x: [self.idx, 0],
+                dfdx: [-1.0, 0.0],
+            });
             result
         }
     }
@@ -200,14 +203,12 @@ impl<'a> Add<Var<'a>> for Var<'a> {
                 value: self.value + other.value,
             };
 
-            let payload = Operation {
-                x: [self.idx, other.idx],
-                dfdx: [1.0, 1.0],
-            };
-
             *count += 1;
 
-            self.tape.record(payload);
+            self.tape.record(Operation {
+                x: [self.idx, other.idx],
+                dfdx: [1.0, 1.0],
+            });
             result
         }
     }
@@ -226,14 +227,12 @@ impl<'a> Sub<Var<'a>> for Var<'a> {
                 value: self.value - other.value,
             };
 
-            let payload = Operation {
-                x: [self.idx, other.idx],
-                dfdx: [1.0, -1.0],
-            };
-
             *count += 1;
 
-            self.tape.record(payload);
+            self.tape.record(Operation {
+                x: [self.idx, other.idx],
+                dfdx: [1.0, -1.0],
+            });
             result
         }
     }
@@ -252,14 +251,12 @@ impl<'a> Mul<Var<'a>> for Var<'a> {
                 value: self.value * other.value,
             };
 
-            let payload = Operation {
-                x: [self.idx, other.idx],
-                dfdx: [other.value, self.value],
-            };
-
             *count += 1;
 
-            self.tape.record(payload);
+            self.tape.record(Operation {
+                x: [self.idx, other.idx],
+                dfdx: [other.value, self.value],
+            });
             result
         }
     }
@@ -287,14 +284,12 @@ impl<'a> Add<f64> for Var<'a> {
                 value: scalar + self.value,
             };
 
-            let payload = Operation {
-                x: [self.idx, 0],
-                dfdx: [1.0, 0.0],
-            };
-
             *count += 1;
 
-            self.tape.record(payload);
+            self.tape.record(Operation {
+                x: [self.idx, 0],
+                dfdx: [1.0, 0.0],
+            });
             result
         }
     }
@@ -322,14 +317,12 @@ impl<'a> Sub<f64> for Var<'a> {
                 value: self.value - scalar,
             };
 
-            let payload = Operation {
-                x: [self.idx, 0],
-                dfdx: [1.0, 0.0],
-            };
-
             *count += 1;
 
-            self.tape.record(payload);
+            self.tape.record(Operation {
+                x: [self.idx, 0],
+                dfdx: [1.0, 0.0],
+            });
             result
         }
     }
@@ -357,14 +350,12 @@ impl<'a> Mul<f64> for Var<'a> {
                 value: scalar * self.value,
             };
 
-            let payload = Operation {
-                x: [self.idx, 0],
-                dfdx: [scalar, 0.0],
-            };
-
             *count += 1;
 
-            self.tape.record(payload);
+            self.tape.record(Operation {
+                x: [self.idx, 0],
+                dfdx: [scalar, 0.0],
+            });
             result
         }
     }
@@ -392,14 +383,12 @@ impl<'a> Div<f64> for Var<'a> {
                 value: self.value / scalar,
             };
 
-            let payload = Operation {
-                x: [self.idx, 0],
-                dfdx: [scalar.recip(), 0.0],
-            };
-
             *count += 1;
 
-            self.tape.record(payload);
+            self.tape.record(Operation {
+                x: [self.idx, 0],
+                dfdx: [scalar.recip(), 0.0],
+            });
             result
         }
     }

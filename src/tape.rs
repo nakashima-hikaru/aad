@@ -4,7 +4,7 @@ use std::cell::UnsafeCell;
 
 #[derive(Default)]
 pub struct Tape {
-    operations: UnsafeCell<Vec<Operation>>,
+    pub(crate) operations: UnsafeCell<Vec<Operation>>,
     pub(crate) count: UnsafeCell<usize>,
 }
 
@@ -26,19 +26,6 @@ impl Tape {
     pub(crate) fn record(&self, operation: Operation) {
         unsafe {
             (*self.operations.get()).push(operation);
-        }
-    }
-
-    #[inline]
-    pub(crate) fn replay(&self, grads: &mut [f64], count: usize) {
-        unsafe {
-            for (i, operation) in (*self.operations.get()).iter().rev().enumerate() {
-                let grad = *grads.get_unchecked(count - i - 1);
-                if grad == 0.0 {
-                    continue;
-                }
-                operation.backward(grads, grad);
-            }
         }
     }
 }
