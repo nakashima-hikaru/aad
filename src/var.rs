@@ -10,9 +10,6 @@ pub struct Var<'a> {
     pub(crate) value: f64,
 }
 
-unsafe impl Send for Var<'_> {}
-unsafe impl Sync for Var<'_> {}
-
 type BinaryFn<T> = fn(T, T) -> T;
 type UnaryFn<T> = fn(T) -> T;
 
