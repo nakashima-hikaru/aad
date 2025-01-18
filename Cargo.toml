@@ -1,6 +1,6 @@
 [package]
 name = "aad"
-version = "0.2.1"
+version = "0.2.2"
 authors = ["Hikaru Nakashima <nakashima.alg57@gmail.com>"]
 description = "Automatic adjoint differentiation library"
 edition = "2021"
