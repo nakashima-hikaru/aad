@@ -19,7 +19,6 @@ impl Tape {
             };
             *count += 1;
             ret
-
         }
     }
 
