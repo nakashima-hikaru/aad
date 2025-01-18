@@ -1,46 +1,21 @@
 use std::ops::AddAssign;
 
-pub(crate) struct UnaryFnPayload {
-    pub x: usize,
-    pub y: usize,
-    pub dfdx: f64,
-}
 
-pub(crate) struct BinaryFnPayload {
-    pub x: usize,
-    pub y: usize,
-    pub z: usize,
-    pub dfdx: f64,
-    pub dfdy: f64,
-}
-
-pub(crate) enum Operation {
-    Unary(UnaryFnPayload),
-    Binary(BinaryFnPayload),
+pub(crate) struct Operation {
+    pub x: [usize; 2],
+    pub dfdx: [f64; 2],
 }
 
 impl Operation {
-    pub(crate) fn backward(&self, grads: &mut [f64]) {
+    #[inline]
+    pub(crate) fn backward(&self, grads: &mut [f64], grad: f64) {
         unsafe {
-            match self {
-                Operation::Unary(payload) => {
-                    let grad = *grads.get_unchecked(payload.y);
-
-                    grads
-                        .get_unchecked_mut(payload.x)
-                        .add_assign(payload.dfdx * grad);
-                }
-                Operation::Binary(payload) => {
-                    let grad = *grads.get_unchecked(payload.z);
-
-                    grads
-                        .get_unchecked_mut(payload.x)
-                        .add_assign(payload.dfdx * grad);
-                    grads
-                        .get_unchecked_mut(payload.y)
-                        .add_assign(payload.dfdy * grad);
-                }
+            for (x, dfdx) in self.x.iter().zip(self.dfdx) {
+                grads
+                    .get_unchecked_mut(*x)
+                    .add_assign(dfdx * grad);
             }
         }
     }
 }
+

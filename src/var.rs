@@ -1,6 +1,5 @@
 use crate::grads::Grads;
-use crate::operations::Operation;
-use crate::operations::{BinaryFnPayload, UnaryFnPayload};
+use crate::operations::{Operation};
 use crate::tape::Tape;
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 
@@ -24,9 +23,10 @@ impl<'a> Var<'a> {
 
     pub fn backward(&self) -> Grads {
         unsafe {
-            let mut grads = vec![0.0; *self.tape.count.get()];
+            let count = *self.tape.count.get();
+            let mut grads = vec![0.0; count];
             *grads.get_unchecked_mut(self.idx) = 1.0;
-            self.tape.replay(&mut grads);
+            self.tape.replay(&mut grads, count);
             Grads(grads)
         }
     }
@@ -41,8 +41,8 @@ impl<'a> Var<'a> {
 
     pub fn powf(&self, power: f64) -> Var<'a> {
         self.custom_scalar_fn(
-            |s, x| f64::powf(x, s),
-            |power, x| power * x.powf(power - 1.0),
+            f64::powf,
+            |x, power| power * x.powf(power - 1.0),
             power,
         )
     }
@@ -89,15 +89,14 @@ impl<'a> Var<'a> {
                 value: f(self.value),
             };
 
-            let payload = UnaryFnPayload {
-                x: self.idx,
-                y: *count,
-                dfdx: df(self.value),
+            let payload = Operation {
+                x: [self.idx, 0],
+                dfdx: [df(self.value), 0.0],
             };
 
             *count += 1;
 
-            self.tape.record(Operation::Unary(payload));
+            self.tape.record(payload);
             result
         }
     }
@@ -110,18 +109,17 @@ impl<'a> Var<'a> {
             let result = Var {
                 idx,
                 tape: self.tape,
-                value: f(scalar, self.value),
+                value: f(self.value, scalar),
             };
 
-            let payload = UnaryFnPayload {
-                x: self.idx,
-                y: idx,
-                dfdx: df(scalar, self.value),
+            let payload = Operation {
+                x: [self.idx, 0],
+                dfdx: [df(self.value, scalar), 0.0],
             };
 
             *count += 1;
 
-            self.tape.record(Operation::Unary(payload));
+            self.tape.record(payload);
             result
         }
     }
@@ -143,17 +141,14 @@ impl<'a> Var<'a> {
                 value: f(self.value(), other.value),
             };
 
-            let payload = BinaryFnPayload {
-                x: self.idx,
-                y: other.idx,
-                z: *idx,
-                dfdx: dfdx(self.value, other.value),
-                dfdy: dfdy(self.value, other.value),
+            let payload = Operation {
+                x: [self.idx, other.idx],
+                dfdx: [dfdx(self.value, other.value), dfdy(self.value, other.value)],
             };
 
             *count += 1;
 
-            self.tape.record(Operation::Binary(payload));
+            self.tape.record(payload);
             result
         }
     }
@@ -171,15 +166,14 @@ impl Neg for Var<'_> {
                 value: -self.value,
             };
 
-            let payload = UnaryFnPayload {
-                x: self.idx,
-                y: *count,
-                dfdx: -1.0,
+            let payload = Operation {
+                x: [self.idx, 0],
+                dfdx: [-1.0, 0.0],
             };
 
             *count += 1;
 
-            self.tape.record(Operation::Unary(payload));
+            self.tape.record(payload);
             result
         }
     }
@@ -197,17 +191,14 @@ impl<'a> Add<Var<'a>> for Var<'a> {
                 value: self.value + other.value,
             };
 
-            let payload = BinaryFnPayload {
-                x: self.idx,
-                y: other.idx,
-                z: *count,
-                dfdx: 1.0,
-                dfdy: 1.0,
+            let payload = Operation {
+                x: [self.idx, other.idx],
+                dfdx: [1.0, 1.0],
             };
 
             *count += 1;
 
-            self.tape.record(Operation::Binary(payload));
+            self.tape.record(payload);
             result
         }
     }
@@ -225,17 +216,14 @@ impl<'a> Sub<Var<'a>> for Var<'a> {
                 value: self.value - other.value,
             };
 
-            let payload = BinaryFnPayload {
-                x: self.idx,
-                y: other.idx,
-                z: *count,
-                dfdx: 1.0,
-                dfdy: -1.0,
+            let payload = Operation {
+                x: [self.idx, other.idx],
+                dfdx: [1.0, -1.0],
             };
 
             *count += 1;
 
-            self.tape.record(Operation::Binary(payload));
+            self.tape.record(payload);
             result
         }
     }
@@ -253,17 +241,14 @@ impl<'a> Mul<Var<'a>> for Var<'a> {
                 value: self.value * other.value,
             };
 
-            let payload = BinaryFnPayload {
-                x: self.idx,
-                y: other.idx,
-                z: *count,
-                dfdx: other.value,
-                dfdy: self.value,
+            let payload = Operation {
+                x: [self.idx, other.idx],
+                dfdx: [other.value, self.value],
             };
 
             *count += 1;
 
-            self.tape.record(Operation::Binary(payload));
+            self.tape.record(payload);
             result
         }
     }
@@ -289,15 +274,14 @@ impl<'a> Add<f64> for Var<'a> {
                 value: scalar + self.value,
             };
 
-            let payload = UnaryFnPayload {
-                x: self.idx,
-                y: *count,
-                dfdx: 1.0,
+            let payload = Operation {
+                x: [self.idx, 0],
+                dfdx: [1.0, 0.0],
             };
 
             *count += 1;
 
-            self.tape.record(Operation::Unary(payload));
+            self.tape.record(payload);
             result
         }
     }
@@ -323,15 +307,14 @@ impl<'a> Sub<f64> for Var<'a> {
                 value: self.value - scalar,
             };
 
-            let payload = UnaryFnPayload {
-                x: self.idx,
-                y: *count,
-                dfdx: 1.0,
+            let payload = Operation {
+                x: [self.idx, 0],
+                dfdx: [1.0, 0.0],
             };
 
             *count += 1;
 
-            self.tape.record(Operation::Unary(payload));
+            self.tape.record(payload);
             result
         }
     }
@@ -357,15 +340,14 @@ impl<'a> Mul<f64> for Var<'a> {
                 value: scalar * self.value,
             };
 
-            let payload = UnaryFnPayload {
-                x: self.idx,
-                y: *count,
-                dfdx: scalar,
+            let payload = Operation {
+                x: [self.idx, 0],
+                dfdx: [scalar, 0.0],
             };
 
             *count += 1;
 
-            self.tape.record(Operation::Unary(payload));
+            self.tape.record(payload);
             result
         }
     }
@@ -391,15 +373,14 @@ impl<'a> Div<f64> for Var<'a> {
                 value: self.value / scalar,
             };
 
-            let payload = UnaryFnPayload {
-                x: self.idx,
-                y: *count,
-                dfdx: scalar.recip(),
+            let payload = Operation {
+                x: [self.idx,0],
+                dfdx: [scalar.recip(), 0.0],
             };
 
             *count += 1;
 
-            self.tape.record(Operation::Unary(payload));
+            self.tape.record(payload);
             result
         }
     }
