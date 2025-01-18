@@ -8,6 +8,7 @@ use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssi
 pub struct Var<'a> {
     pub(crate) idx: usize,
     pub(crate) tape: &'a Tape,
+    pub(crate) value: f64,
 }
 
 unsafe impl Send for Var<'_> {}
@@ -18,12 +19,12 @@ type UnaryFn<T> = fn(T) -> T;
 
 impl<'a> Var<'a> {
     pub fn value(&self) -> f64 {
-        unsafe { *(*self.tape.values.get()).get_unchecked(self.idx) }
+        self.value
     }
 
     pub fn backward(&self) -> Grads {
         unsafe {
-            let mut grads = vec![0.0; (*self.tape.values.get()).len()];
+            let mut grads = vec![0.0; *self.tape.count.get()];
             *grads.get_unchecked_mut(self.idx) = 1.0;
             self.tape.replay(&mut grads);
             Grads(grads)
@@ -81,21 +82,20 @@ impl<'a> Var<'a> {
     #[inline(always)]
     pub fn custom_unary_fn(&self, f: UnaryFn<f64>, df: UnaryFn<f64>) -> Var<'a> {
         unsafe {
-            let values = self.tape.values.get();
-            let idx = (*values).len();
+            let count = self.tape.count.get();
             let result = Var {
-                idx,
+                idx: *count,
                 tape: self.tape,
+                value: f(self.value),
             };
-
-            let x = *(*values).get_unchecked(self.idx);
-            (*values).push(f(x));
 
             let payload = UnaryFnPayload {
                 x: self.idx,
-                y: idx,
-                dfdx: df(x),
+                y: *count,
+                dfdx: df(self.value),
             };
+
+            *count += 1;
 
             self.tape.record(Operation::Unary(payload));
             result
@@ -105,21 +105,21 @@ impl<'a> Var<'a> {
     #[inline(always)]
     pub fn custom_scalar_fn(&self, f: BinaryFn<f64>, df: BinaryFn<f64>, scalar: f64) -> Var<'a> {
         unsafe {
-            let values = self.tape.values.get();
-            let idx = (*values).len();
+            let count = self.tape.count.get();
+            let idx = *count;
             let result = Var {
                 idx,
                 tape: self.tape,
+                value: f(scalar, self.value),
             };
-
-            let x = *(*values).get_unchecked(self.idx);
-            (*values).push(f(scalar, x));
 
             let payload = UnaryFnPayload {
                 x: self.idx,
                 y: idx,
-                dfdx: df(scalar, x),
+                dfdx: df(scalar, self.value),
             };
+
+            *count += 1;
 
             self.tape.record(Operation::Unary(payload));
             result
@@ -135,24 +135,23 @@ impl<'a> Var<'a> {
         dfdy: BinaryFn<f64>,
     ) -> Var<'a> {
         unsafe {
-            let values = self.tape.values.get();
-            let idx = (*values).len();
+            let count = self.tape.count.get();
+            let idx = count;
             let result = Var {
-                idx,
+                idx: *idx,
                 tape: self.tape,
+                value: f(self.value(), other.value),
             };
-
-            let x = *(*values).get_unchecked(self.idx);
-            let y = *(*values).get_unchecked(other.idx);
-            (*values).push(f(x, y));
 
             let payload = BinaryFnPayload {
                 x: self.idx,
                 y: other.idx,
-                z: idx,
-                dfdx: dfdx(x, y),
-                dfdy: dfdy(x, y),
+                z: *idx,
+                dfdx: dfdx(self.value, other.value),
+                dfdy: dfdy(self.value, other.value),
             };
+
+            *count += 1;
 
             self.tape.record(Operation::Binary(payload));
             result
@@ -165,21 +164,20 @@ impl Neg for Var<'_> {
 
     fn neg(self) -> Self::Output {
         unsafe {
-            let values = self.tape.values.get();
-            let idx = (*values).len();
+            let count = self.tape.count.get();
             let result = Var {
-                idx,
+                idx: *count,
                 tape: self.tape,
+                value: -self.value,
             };
-
-            let x = *(*values).get_unchecked(self.idx);
-            (*values).push(-x);
 
             let payload = UnaryFnPayload {
                 x: self.idx,
-                y: idx,
+                y: *count,
                 dfdx: -1.0,
             };
+
+            *count += 1;
 
             self.tape.record(Operation::Unary(payload));
             result
@@ -192,24 +190,22 @@ impl<'a> Add<Var<'a>> for Var<'a> {
 
     fn add(self, other: Var<'a>) -> Self::Output {
         unsafe {
-            let values = self.tape.values.get();
-            let idx = (*values).len();
+            let count = self.tape.count.get();
             let result = Var {
-                idx,
+                idx: *count,
                 tape: self.tape,
+                value: self.value + other.value,
             };
-
-            let x = *(*values).get_unchecked(self.idx);
-            let y = *(*values).get_unchecked(other.idx);
-            (*values).push(x + y);
 
             let payload = BinaryFnPayload {
                 x: self.idx,
                 y: other.idx,
-                z: idx,
+                z: *count,
                 dfdx: 1.0,
                 dfdy: 1.0,
             };
+
+            *count += 1;
 
             self.tape.record(Operation::Binary(payload));
             result
@@ -222,24 +218,22 @@ impl<'a> Sub<Var<'a>> for Var<'a> {
 
     fn sub(self, other: Var<'a>) -> Self::Output {
         unsafe {
-            let values = self.tape.values.get();
-            let idx = (*values).len();
+            let count = self.tape.count.get();
             let result = Var {
-                idx,
+                idx: *count,
                 tape: self.tape,
+                value: self.value - other.value,
             };
-
-            let x = *(*values).get_unchecked(self.idx);
-            let y = *(*values).get_unchecked(other.idx);
-            (*values).push(x - y);
 
             let payload = BinaryFnPayload {
                 x: self.idx,
                 y: other.idx,
-                z: idx,
+                z: *count,
                 dfdx: 1.0,
                 dfdy: -1.0,
             };
+
+            *count += 1;
 
             self.tape.record(Operation::Binary(payload));
             result
@@ -252,24 +246,22 @@ impl<'a> Mul<Var<'a>> for Var<'a> {
 
     fn mul(self, other: Var<'a>) -> Self::Output {
         unsafe {
-            let values = self.tape.values.get();
-            let idx = (*values).len();
+            let count = self.tape.count.get();
             let result = Var {
-                idx,
+                idx: *count,
                 tape: self.tape,
+                value: self.value * other.value,
             };
-
-            let x = *(*values).get_unchecked(self.idx);
-            let y = *(*values).get_unchecked(other.idx);
-            (*values).push(x * y);
 
             let payload = BinaryFnPayload {
                 x: self.idx,
                 y: other.idx,
-                z: idx,
-                dfdx: y,
-                dfdy: x,
+                z: *count,
+                dfdx: other.value,
+                dfdy: self.value,
             };
+
+            *count += 1;
 
             self.tape.record(Operation::Binary(payload));
             result
@@ -290,21 +282,20 @@ impl<'a> Add<f64> for Var<'a> {
 
     fn add(self, scalar: f64) -> Var<'a> {
         unsafe {
-            let values = self.tape.values.get();
-            let idx = (*values).len();
+            let count = self.tape.count.get();
             let result = Var {
-                idx,
+                idx: *count,
                 tape: self.tape,
+                value: scalar + self.value,
             };
-
-            let x = *(*values).get_unchecked(self.idx);
-            (*values).push(scalar + x);
 
             let payload = UnaryFnPayload {
                 x: self.idx,
-                y: idx,
+                y: *count,
                 dfdx: 1.0,
             };
+
+            *count += 1;
 
             self.tape.record(Operation::Unary(payload));
             result
@@ -325,21 +316,20 @@ impl<'a> Sub<f64> for Var<'a> {
 
     fn sub(self, scalar: f64) -> Self::Output {
         unsafe {
-            let values = self.tape.values.get();
-            let idx = (*values).len();
+            let count = self.tape.count.get();
             let result = Var {
-                idx,
+                idx: *count,
                 tape: self.tape,
+                value: self.value - scalar,
             };
-
-            let x = *(*values).get_unchecked(self.idx);
-            (*values).push(x - scalar);
 
             let payload = UnaryFnPayload {
                 x: self.idx,
-                y: idx,
+                y: *count,
                 dfdx: 1.0,
             };
+
+            *count += 1;
 
             self.tape.record(Operation::Unary(payload));
             result
@@ -360,21 +350,20 @@ impl<'a> Mul<f64> for Var<'a> {
 
     fn mul(self, scalar: f64) -> Var<'a> {
         unsafe {
-            let values = self.tape.values.get();
-            let idx = (*values).len();
+            let count = self.tape.count.get();
             let result = Var {
-                idx,
+                idx: *count,
                 tape: self.tape,
+                value: scalar * self.value,
             };
-
-            let x = *(*values).get_unchecked(self.idx);
-            (*values).push(scalar * x);
 
             let payload = UnaryFnPayload {
                 x: self.idx,
-                y: idx,
+                y: *count,
                 dfdx: scalar,
             };
+
+            *count += 1;
 
             self.tape.record(Operation::Unary(payload));
             result
@@ -395,21 +384,20 @@ impl<'a> Div<f64> for Var<'a> {
 
     fn div(self, scalar: f64) -> Var<'a> {
         unsafe {
-            let values = self.tape.values.get();
-            let idx = (*values).len();
+            let count = self.tape.count.get();
             let result = Var {
-                idx,
+                idx: *count,
                 tape: self.tape,
+                value: self.value / scalar,
             };
-
-            let x = *(*values).get_unchecked(self.idx);
-            (*values).push(x / scalar);
 
             let payload = UnaryFnPayload {
                 x: self.idx,
-                y: idx,
+                y: *count,
                 dfdx: scalar.recip(),
             };
+
+            *count += 1;
 
             self.tape.record(Operation::Unary(payload));
             result

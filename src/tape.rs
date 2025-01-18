@@ -5,16 +5,21 @@ use std::cell::UnsafeCell;
 #[derive(Default)]
 pub struct Tape {
     operations: UnsafeCell<Vec<Operation>>,
-    pub(crate) values: UnsafeCell<Vec<f64>>,
+    pub(crate) count: UnsafeCell<usize>,
 }
 
 impl Tape {
     pub fn var(&self, value: f64) -> Var {
         unsafe {
-            let values = &mut *self.values.get();
-            let idx = (*values).len();
-            (*values).push(value);
-            Var { idx, tape: self }
+            let count = self.count.get();
+            let ret = Var {
+                idx: *count,
+                tape: self,
+                value,
+            };
+            *count += 1;
+            ret
+
         }
     }
 
