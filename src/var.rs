@@ -3,7 +3,7 @@ use crate::operations::Operation;
 use crate::tape::Tape;
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub struct Var<'a> {
     pub(crate) idx: usize,
     pub(crate) tape: &'a Tape,
@@ -17,6 +17,7 @@ type BinaryFn<T> = fn(T, T) -> T;
 type UnaryFn<T> = fn(T) -> T;
 
 impl<'a> Var<'a> {
+    #[inline]
     pub fn value(&self) -> f64 {
         self.value
     }
@@ -24,17 +25,19 @@ impl<'a> Var<'a> {
     #[inline]
     pub fn backward(&self) -> Grads {
         unsafe {
-            let count = *self.tape.count.get();
+            let operations = self.tape.operations.get();
+            let count = (*operations).len();
             let mut grads = vec![0.0; count];
             *grads.get_unchecked_mut(self.idx) = 1.0;
 
-            for (i, operation) in (*self.tape.operations.get()).iter().rev().enumerate() {
-                let grad = *grads.get_unchecked(count - i - 1);
+            for (i, operation) in (*operations).iter().enumerate().rev() {
+                let grad = *grads.get_unchecked(i);
                 if grad == 0.0 {
                     continue;
                 }
-                for i in 0..2 {
-                    *grads.get_unchecked_mut(operation.x[i]) += operation.dfdx[i] * grad;
+                for j in 0..2 {
+                    *grads.get_unchecked_mut(operation.0.get_unchecked(j).0) +=
+                        operation.0.get_unchecked(j).1 * grad;
                 }
             }
 
@@ -100,43 +103,32 @@ impl<'a> Var<'a> {
     #[inline(always)]
     pub fn custom_unary_fn(&self, f: UnaryFn<f64>, df: UnaryFn<f64>) -> Var<'a> {
         unsafe {
-            let count = self.tape.count.get();
-            let result = Var {
-                idx: *count,
+            Var {
+                idx: {
+                    let operations = self.tape.operations.get();
+                    let count = (*operations).len();
+                    (*operations).push(Operation([(self.idx, df(self.value)), (0, 0.0)]));
+                    count
+                },
                 tape: self.tape,
                 value: f(self.value),
-            };
-
-            let payload = Operation {
-                x: [self.idx, 0],
-                dfdx: [df(self.value), 0.0],
-            };
-
-            *count += 1;
-
-            self.tape.record(payload);
-            result
+            }
         }
     }
 
     #[inline(always)]
     pub fn custom_scalar_fn(&self, f: BinaryFn<f64>, df: BinaryFn<f64>, scalar: f64) -> Var<'a> {
         unsafe {
-            let count = self.tape.count.get();
-            let idx = *count;
-            let result = Var {
-                idx,
+            Var {
+                idx: {
+                    let operations = self.tape.operations.get();
+                    let count = (*operations).len();
+                    (*operations).push(Operation([(self.idx, df(self.value, scalar)), (0, 0.0)]));
+                    count
+                },
                 tape: self.tape,
                 value: f(self.value, scalar),
-            };
-
-            *count += 1;
-
-            self.tape.record(Operation {
-                x: [self.idx, 0],
-                dfdx: [df(self.value, scalar), 0.0],
-            });
-            result
+            }
         }
     }
 
@@ -149,20 +141,19 @@ impl<'a> Var<'a> {
         dfdy: BinaryFn<f64>,
     ) -> Var<'a> {
         unsafe {
-            let count = self.tape.count.get();
-            let result = Var {
-                idx: *count,
+            Var {
+                idx: {
+                    let operations = self.tape.operations.get();
+                    let count = (*operations).len();
+                    (*operations).push(Operation([
+                        (self.idx, dfdx(self.value, other.value)),
+                        (other.idx, dfdy(self.value, other.value)),
+                    ]));
+                    count
+                },
                 tape: self.tape,
-                value: f(self.value(), other.value),
-            };
-
-            *count += 1;
-
-            self.tape.record(Operation {
-                x: [self.idx, other.idx],
-                dfdx: [dfdx(self.value, other.value), dfdy(self.value, other.value)],
-            });
-            result
+                value: f(self.value, other.value),
+            }
         }
     }
 }
@@ -172,20 +163,16 @@ impl Neg for Var<'_> {
     #[inline]
     fn neg(self) -> Self::Output {
         unsafe {
-            let count = self.tape.count.get();
-            let result = Var {
-                idx: *count,
+            Var {
+                idx: {
+                    let operations = self.tape.operations.get();
+                    let count = (*operations).len();
+                    (*operations).push(Operation([(self.idx, -1.0), (0, 0.0)]));
+                    count
+                },
                 tape: self.tape,
                 value: -self.value,
-            };
-
-            *count += 1;
-
-            self.tape.record(Operation {
-                x: [self.idx, 0],
-                dfdx: [-1.0, 0.0],
-            });
-            result
+            }
         }
     }
 }
@@ -196,20 +183,16 @@ impl<'a> Add<Var<'a>> for Var<'a> {
     #[inline]
     fn add(self, other: Var<'a>) -> Self::Output {
         unsafe {
-            let count = self.tape.count.get();
-            let result = Var {
-                idx: *count,
+            Var {
+                idx: {
+                    let operations = self.tape.operations.get();
+                    let count = (*operations).len();
+                    (*operations).push(Operation([(self.idx, 1.0), (other.idx, 1.0)]));
+                    count
+                },
                 tape: self.tape,
                 value: self.value + other.value,
-            };
-
-            *count += 1;
-
-            self.tape.record(Operation {
-                x: [self.idx, other.idx],
-                dfdx: [1.0, 1.0],
-            });
-            result
+            }
         }
     }
 }
@@ -220,20 +203,16 @@ impl<'a> Sub<Var<'a>> for Var<'a> {
     #[inline]
     fn sub(self, other: Var<'a>) -> Self::Output {
         unsafe {
-            let count = self.tape.count.get();
-            let result = Var {
-                idx: *count,
+            Var {
+                idx: {
+                    let operations = self.tape.operations.get();
+                    let count = (*operations).len();
+                    (*operations).push(Operation([(self.idx, 1.0), (other.idx, -1.0)]));
+                    count
+                },
                 tape: self.tape,
                 value: self.value - other.value,
-            };
-
-            *count += 1;
-
-            self.tape.record(Operation {
-                x: [self.idx, other.idx],
-                dfdx: [1.0, -1.0],
-            });
-            result
+            }
         }
     }
 }
@@ -244,20 +223,19 @@ impl<'a> Mul<Var<'a>> for Var<'a> {
     #[inline]
     fn mul(self, other: Var<'a>) -> Self::Output {
         unsafe {
-            let count = self.tape.count.get();
-            let result = Var {
-                idx: *count,
+            Var {
+                idx: {
+                    let operations = self.tape.operations.get();
+                    let count = (*operations).len();
+                    (*operations).push(Operation([
+                        (self.idx, other.value),
+                        (other.idx, self.value),
+                    ]));
+                    count
+                },
                 tape: self.tape,
                 value: self.value * other.value,
-            };
-
-            *count += 1;
-
-            self.tape.record(Operation {
-                x: [self.idx, other.idx],
-                dfdx: [other.value, self.value],
-            });
-            result
+            }
         }
     }
 }
@@ -277,20 +255,16 @@ impl<'a> Add<f64> for Var<'a> {
     #[inline]
     fn add(self, scalar: f64) -> Var<'a> {
         unsafe {
-            let count = self.tape.count.get();
-            let result = Var {
-                idx: *count,
+            Var {
+                idx: {
+                    let operations = self.tape.operations.get();
+                    let count = (*operations).len();
+                    (*operations).push(Operation([(self.idx, 1.0), (0, 0.0)]));
+                    count
+                },
                 tape: self.tape,
                 value: scalar + self.value,
-            };
-
-            *count += 1;
-
-            self.tape.record(Operation {
-                x: [self.idx, 0],
-                dfdx: [1.0, 0.0],
-            });
-            result
+            }
         }
     }
 }
@@ -310,20 +284,16 @@ impl<'a> Sub<f64> for Var<'a> {
     #[inline]
     fn sub(self, scalar: f64) -> Self::Output {
         unsafe {
-            let count = self.tape.count.get();
-            let result = Var {
-                idx: *count,
+            Var {
+                idx: {
+                    let operations = self.tape.operations.get();
+                    let count = (*operations).len();
+                    (*operations).push(Operation([(self.idx, 1.0), (0, 0.0)]));
+                    count
+                },
                 tape: self.tape,
                 value: self.value - scalar,
-            };
-
-            *count += 1;
-
-            self.tape.record(Operation {
-                x: [self.idx, 0],
-                dfdx: [1.0, 0.0],
-            });
-            result
+            }
         }
     }
 }
@@ -343,20 +313,16 @@ impl<'a> Mul<f64> for Var<'a> {
     #[inline]
     fn mul(self, scalar: f64) -> Var<'a> {
         unsafe {
-            let count = self.tape.count.get();
-            let result = Var {
-                idx: *count,
+            Var {
+                idx: {
+                    let operations = self.tape.operations.get();
+                    let count = (*operations).len();
+                    (*operations).push(Operation([(self.idx, scalar), (0, 0.0)]));
+                    count
+                },
                 tape: self.tape,
                 value: scalar * self.value,
-            };
-
-            *count += 1;
-
-            self.tape.record(Operation {
-                x: [self.idx, 0],
-                dfdx: [scalar, 0.0],
-            });
-            result
+            }
         }
     }
 }
@@ -376,20 +342,16 @@ impl<'a> Div<f64> for Var<'a> {
     #[inline]
     fn div(self, scalar: f64) -> Var<'a> {
         unsafe {
-            let count = self.tape.count.get();
-            let result = Var {
-                idx: *count,
+            Var {
+                idx: {
+                    let operations = self.tape.operations.get();
+                    let count = (*operations).len();
+                    (*operations).push(Operation([(self.idx, scalar.recip()), (0, 0.0)]));
+                    count
+                },
                 tape: self.tape,
                 value: self.value / scalar,
-            };
-
-            *count += 1;
-
-            self.tape.record(Operation {
-                x: [self.idx, 0],
-                dfdx: [scalar.recip(), 0.0],
-            });
-            result
+            }
         }
     }
 }

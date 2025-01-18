@@ -19,7 +19,6 @@ mod tests {
         assert_eq!(z.value(), 5.0);
 
         let grads = z.backward();
-
         assert_eq!(grads.get(&[x, y]), [1.0, 1.0]);
     }
 
