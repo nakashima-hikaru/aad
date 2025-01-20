@@ -18,11 +18,7 @@ impl Variable<'_> {
 
     #[inline]
     pub fn powi(self, power: i32) -> Self {
-        self.apply_scalar_function::<i32>(
-            f64::powi,
-            |x, p| f64::from(p) * x.powi(p - 1),
-            power,
-        )
+        self.apply_scalar_function::<i32>(f64::powi, |x, p| f64::from(p) * x.powi(p - 1), power)
     }
 
     #[inline]
