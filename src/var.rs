@@ -15,13 +15,13 @@ type UnaryFn<T> = fn(T) -> T;
 
 impl<'a> Var<'a> {
     #[inline]
-    pub fn value(&self) -> f64 {
+    pub fn value(self) -> f64 {
         self.value
     }
 
     #[inline]
-    pub fn backward(&self) -> Grads {
-        let operations = self.tape.operations.borrow_mut();
+    pub fn backward(self) -> Grads {
+        let operations = &mut self.tape.operations.borrow_mut();
         let count = (*operations).len();
         let mut grads = vec![0.0; count];
         grads[self.idx] = 1.0;
@@ -40,57 +40,57 @@ impl<'a> Var<'a> {
     }
 
     #[inline]
-    pub fn sin(&self) -> Var<'a> {
+    pub fn sin(self) -> Var<'a> {
         self.custom_unary_fn(f64::sin, f64::cos)
     }
 
     #[inline]
-    pub fn ln(&self) -> Var<'a> {
+    pub fn ln(self) -> Var<'a> {
         self.custom_unary_fn(f64::ln, f64::recip)
     }
 
     #[inline]
-    pub fn powf(&self, power: f64) -> Var<'a> {
+    pub fn powf(self, power: f64) -> Var<'a> {
         self.custom_scalar_fn(f64::powf, |x, power| power * x.powf(power - 1.0), power)
     }
 
     #[inline]
-    pub fn exp(&self) -> Var<'a> {
+    pub fn exp(self) -> Var<'a> {
         self.custom_unary_fn(f64::exp, f64::exp)
     }
 
     #[inline]
-    pub fn sqrt(&self) -> Var<'a> {
+    pub fn sqrt(self) -> Var<'a> {
         self.custom_unary_fn(f64::sqrt, |x| 0.5 * x.sqrt().recip())
     }
 
     #[inline]
-    pub fn cos(&self) -> Var<'a> {
+    pub fn cos(self) -> Var<'a> {
         self.custom_unary_fn(f64::cos, |x| -f64::sin(x))
     }
 
     #[inline]
-    pub fn tan(&self) -> Var<'a> {
+    pub fn tan(self) -> Var<'a> {
         self.custom_unary_fn(f64::tan, |x| f64::cos(x).powi(2).recip())
     }
 
     #[inline]
-    pub fn sinh(&self) -> Var<'a> {
+    pub fn sinh(self) -> Var<'a> {
         self.custom_unary_fn(f64::sinh, f64::cosh)
     }
 
     #[inline]
-    pub fn cosh(&self) -> Var<'a> {
+    pub fn cosh(self) -> Var<'a> {
         self.custom_unary_fn(f64::cosh, f64::sinh)
     }
 
     #[inline]
-    pub fn tanh(&self) -> Var<'a> {
+    pub fn tanh(self) -> Var<'a> {
         self.custom_unary_fn(f64::tanh, |x| f64::cosh(x).powi(2).recip())
     }
 
     #[inline]
-    pub fn recip(&self) -> Var<'a> {
+    pub fn recip(self) -> Var<'a> {
         self.custom_unary_fn(f64::recip, |x| -(x * x).recip())
     }
 
@@ -98,7 +98,7 @@ impl<'a> Var<'a> {
     pub fn custom_unary_fn(&self, f: UnaryFn<f64>, df: UnaryFn<f64>) -> Var<'a> {
         Var {
             idx: {
-                let mut operations = self.tape.operations.borrow_mut();
+                let operations = &mut self.tape.operations.borrow_mut();
                 let count = (*operations).len();
                 (*operations).push(Operation([(self.idx, df(self.value)), (0, 0.0)]));
                 count
@@ -112,7 +112,7 @@ impl<'a> Var<'a> {
     pub fn custom_scalar_fn(&self, f: BinaryFn<f64>, df: BinaryFn<f64>, scalar: f64) -> Var<'a> {
         Var {
             idx: {
-                let mut operations = self.tape.operations.borrow_mut();
+                let operations = &mut self.tape.operations.borrow_mut();
                 let count = (*operations).len();
                 (*operations).push(Operation([(self.idx, df(self.value, scalar)), (0, 0.0)]));
                 count
@@ -132,7 +132,7 @@ impl<'a> Var<'a> {
     ) -> Var<'a> {
         Var {
             idx: {
-                let mut operations = self.tape.operations.borrow_mut();
+                let operations = &mut self.tape.operations.borrow_mut();
                 let count = (*operations).len();
                 (*operations).push(Operation([
                     (self.idx, dfdx(self.value, other.value)),
@@ -170,7 +170,7 @@ impl<'a> Add<Var<'a>> for Var<'a> {
     fn add(self, other: Var<'a>) -> Self::Output {
         Var {
             idx: {
-                let mut operations = self.tape.operations.borrow_mut();
+                let operations = &mut self.tape.operations.borrow_mut();
                 let count = (*operations).len();
                 (*operations).push(Operation([(self.idx, 1.0), (other.idx, 1.0)]));
                 count
@@ -188,7 +188,7 @@ impl<'a> Sub<Var<'a>> for Var<'a> {
     fn sub(self, other: Var<'a>) -> Self::Output {
         Var {
             idx: {
-                let mut operations = self.tape.operations.borrow_mut();
+                let operations = &mut self.tape.operations.borrow_mut();
                 let count = (*operations).len();
                 (*operations).push(Operation([(self.idx, 1.0), (other.idx, -1.0)]));
                 count
@@ -206,7 +206,7 @@ impl<'a> Mul<Var<'a>> for Var<'a> {
     fn mul(self, other: Var<'a>) -> Self::Output {
         Var {
             idx: {
-                let mut operations = self.tape.operations.borrow_mut();
+                let operations = &mut self.tape.operations.borrow_mut();
                 let count = (*operations).len();
                 (*operations).push(Operation([
                     (self.idx, other.value),
@@ -317,7 +317,7 @@ impl<'a> Div<f64> for Var<'a> {
     fn div(self, scalar: f64) -> Var<'a> {
         Var {
             idx: {
-                let mut operations = self.tape.operations.borrow_mut();
+                let operations = &mut self.tape.operations.borrow_mut();
                 let count = (*operations).len();
                 (*operations).push(Operation([(self.idx, scalar.recip()), (0, 0.0)]));
                 count
