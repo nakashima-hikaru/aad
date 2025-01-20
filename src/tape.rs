@@ -1,5 +1,5 @@
-use crate::operations::OperationRecord;
-use crate::var::Variable;
+use crate::operation_record::OperationRecord;
+use crate::variable::Variable;
 use std::cell::RefCell;
 
 #[derive(Debug, Default)]

@@ -1,4 +1,4 @@
-use crate::var::Variable;
+use crate::variable::Variable;
 pub struct Gradients(pub(crate) Vec<f64>);
 
 impl Gradients {

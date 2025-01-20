@@ -1,5 +1,5 @@
-use crate::grads::Gradients;
-use crate::operations::OperationRecord;
+use crate::gradients::Gradients;
+use crate::operation_record::OperationRecord;
 use crate::tape::Tape;
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 
@@ -109,12 +109,20 @@ impl<'a> Variable<'a> {
     }
 
     #[inline(always)]
-    pub fn apply_scalar_function(&self, f: BinaryFn<f64>, df: BinaryFn<f64>, scalar: f64) -> Variable<'a> {
+    pub fn apply_scalar_function(
+        &self,
+        f: BinaryFn<f64>,
+        df: BinaryFn<f64>,
+        scalar: f64,
+    ) -> Variable<'a> {
         Variable {
             index: {
                 let operations = &mut self.tape.operations.borrow_mut();
                 let count = (*operations).len();
-                (*operations).push(OperationRecord([(self.index, df(self.value, scalar)), (0, 0.0)]));
+                (*operations).push(OperationRecord([
+                    (self.index, df(self.value, scalar)),
+                    (0, 0.0),
+                ]));
                 count
             },
             tape: self.tape,

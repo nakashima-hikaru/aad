@@ -1,7 +1,7 @@
-pub(crate) mod grads;
-pub(crate) mod operations;
+pub(crate) mod gradients;
+pub(crate) mod operation_record;
 pub mod tape;
-pub(crate) mod var;
+pub(crate) mod variable;
 
 pub use tape::Tape;
 
@@ -246,7 +246,10 @@ mod tests {
             0.0,
         ];
 
-        assert_eq!(grads.get_gradients(&[x0, x1, x2, x3, x4]), EXPECTED_GRADIENTS);
+        assert_eq!(
+            grads.get_gradients(&[x0, x1, x2, x3, x4]),
+            EXPECTED_GRADIENTS
+        );
     }
 
     const EPSILON: f64 = 1e-6;
