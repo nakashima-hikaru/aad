@@ -23,65 +23,65 @@ impl Add<Self> for Variable<'_> {
     type Output = Self;
 
     #[inline]
-    fn add(self, other: Self) -> Self::Output {
+    fn add(self, rhs: Self) -> Self::Output {
         Variable {
             index: {
                 let operations = &mut self.tape.operations.borrow_mut();
                 let count = (*operations).len();
-                (*operations).push(OperationRecord([(self.index, 1.0), (other.index, 1.0)]));
+                (*operations).push(OperationRecord([(self.index, 1.0), (rhs.index, 1.0)]));
                 count
             },
             tape: self.tape,
-            value: self.value + other.value,
+            value: self.value + rhs.value,
         }
     }
 }
 
-impl<'a> Sub<Self> for Variable<'a> {
+impl Sub<Self> for Variable<'_> {
     type Output = Self;
 
     #[inline]
-    fn sub(self, other: Variable<'a>) -> Self::Output {
+    fn sub(self, rhs: Self) -> Self::Output {
         Variable {
             index: {
                 let operations = &mut self.tape.operations.borrow_mut();
                 let count = (*operations).len();
-                (*operations).push(OperationRecord([(self.index, 1.0), (other.index, -1.0)]));
+                (*operations).push(OperationRecord([(self.index, 1.0), (rhs.index, -1.0)]));
                 count
             },
             tape: self.tape,
-            value: self.value - other.value,
+            value: self.value - rhs.value,
         }
     }
 }
 
-impl<'a> Mul<Self> for Variable<'a> {
+impl Mul<Self> for Variable<'_> {
     type Output = Self;
 
     #[inline]
-    fn mul(self, other: Variable<'a>) -> Self::Output {
+    fn mul(self, rhs: Self) -> Self::Output {
         Variable {
             index: {
                 let operations = &mut self.tape.operations.borrow_mut();
                 let count = (*operations).len();
                 (*operations).push(OperationRecord([
-                    (self.index, other.value),
-                    (other.index, self.value),
+                    (self.index, rhs.value),
+                    (rhs.index, self.value),
                 ]));
                 count
             },
             tape: self.tape,
-            value: self.value * other.value,
+            value: self.value * rhs.value,
         }
     }
 }
 
-impl<'a> Div<Self> for Variable<'a> {
+impl Div<Self> for Variable<'_> {
     type Output = Self;
 
     #[inline]
-    fn div(self, other: Variable<'a>) -> Self::Output {
-        self.apply_binary_function(&other, |x, y| x / y, |_, y| y.recip(), |x, y| -x / (y * y))
+    fn div(self, rhs: Self) -> Self::Output {
+        self.apply_binary_function(&rhs, |x, y| x / y, |_, y| y.recip(), |x, y| -x / (y * y))
     }
 }
 
@@ -89,7 +89,7 @@ impl Add<f64> for Variable<'_> {
     type Output = Self;
 
     #[inline]
-    fn add(self, scalar: f64) -> Self::Output {
+    fn add(self, rhs: f64) -> Self::Output {
         Variable {
             index: {
                 let mut operations = self.tape.operations.borrow_mut();
@@ -98,7 +98,7 @@ impl Add<f64> for Variable<'_> {
                 count
             },
             tape: self.tape,
-            value: scalar + self.value,
+            value: rhs + self.value,
         }
     }
 }
@@ -107,8 +107,8 @@ impl<'a> Add<Variable<'a>> for f64 {
     type Output = Variable<'a>;
 
     #[inline]
-    fn add(self, var: Self::Output) -> Self::Output {
-        var + self
+    fn add(self, rhs: Self::Output) -> Self::Output {
+        rhs + self
     }
 }
 
@@ -116,7 +116,7 @@ impl Sub<f64> for Variable<'_> {
     type Output = Self;
 
     #[inline]
-    fn sub(self, scalar: f64) -> Self::Output {
+    fn sub(self, rhs: f64) -> Self::Output {
         Variable {
             index: {
                 let mut operations = self.tape.operations.borrow_mut();
@@ -125,7 +125,7 @@ impl Sub<f64> for Variable<'_> {
                 count
             },
             tape: self.tape,
-            value: self.value - scalar,
+            value: self.value - rhs,
         }
     }
 }
@@ -134,8 +134,8 @@ impl<'a> Sub<Variable<'a>> for f64 {
     type Output = Variable<'a>;
 
     #[inline]
-    fn sub(self, var: Self::Output) -> Self::Output {
-        -var + self
+    fn sub(self, rhs: Self::Output) -> Self::Output {
+        -rhs + self
     }
 }
 
@@ -143,16 +143,16 @@ impl Mul<f64> for Variable<'_> {
     type Output = Self;
 
     #[inline]
-    fn mul(self, scalar: f64) -> Self::Output {
+    fn mul(self, rhs: f64) -> Self::Output {
         Variable {
             index: {
                 let mut operations = self.tape.operations.borrow_mut();
                 let count = (*operations).len();
-                (*operations).push(OperationRecord([(self.index, scalar), (0, 0.0)]));
+                (*operations).push(OperationRecord([(self.index, rhs), (0, 0.0)]));
                 count
             },
             tape: self.tape,
-            value: scalar * self.value,
+            value: rhs * self.value,
         }
     }
 }
@@ -161,8 +161,8 @@ impl<'a> Mul<Variable<'a>> for f64 {
     type Output = Variable<'a>;
 
     #[inline]
-    fn mul(self, var: Self::Output) -> Self::Output {
-        var * self
+    fn mul(self, rhs: Self::Output) -> Self::Output {
+        rhs * self
     }
 }
 
@@ -170,16 +170,16 @@ impl Div<f64> for Variable<'_> {
     type Output = Self;
 
     #[inline]
-    fn div(self, scalar: f64) -> Self::Output {
+    fn div(self, rhs: f64) -> Self::Output {
         Variable {
             index: {
                 let operations = &mut self.tape.operations.borrow_mut();
                 let count = (*operations).len();
-                (*operations).push(OperationRecord([(self.index, scalar.recip()), (0, 0.0)]));
+                (*operations).push(OperationRecord([(self.index, rhs.recip()), (0, 0.0)]));
                 count
             },
             tape: self.tape,
-            value: self.value / scalar,
+            value: self.value / rhs,
         }
     }
 }
@@ -189,63 +189,63 @@ impl<'a> Div<Variable<'a>> for f64 {
     type Output = Variable<'a>;
 
     #[inline]
-    fn div(self, var: Self::Output) -> Self::Output {
-        var.recip() * self
+    fn div(self, rhs: Self::Output) -> Self::Output {
+        rhs.recip() * self
     }
 }
 
 impl AddAssign<f64> for Variable<'_> {
     #[inline]
-    fn add_assign(&mut self, scalar: f64) {
-        *self = *self + scalar
+    fn add_assign(&mut self, rhs: f64) {
+        *self = *self + rhs;
     }
 }
 
 impl AddAssign<Self> for Variable<'_> {
     #[inline]
-    fn add_assign(&mut self, other: Self) {
-        *self = *self + other
+    fn add_assign(&mut self, rhs: Self) {
+        *self = *self + rhs;
     }
 }
 
 impl SubAssign<f64> for Variable<'_> {
     #[inline]
-    fn sub_assign(&mut self, scalar: f64) {
-        *self = *self - scalar
+    fn sub_assign(&mut self, rhs: f64) {
+        *self = *self - rhs;
     }
 }
 
 impl SubAssign<Self> for Variable<'_> {
     #[inline]
-    fn sub_assign(&mut self, other: Self) {
-        *self = *self - other
+    fn sub_assign(&mut self, rhs: Self) {
+        *self = *self - rhs;
     }
 }
 
 impl MulAssign<f64> for Variable<'_> {
     #[inline]
-    fn mul_assign(&mut self, scalar: f64) {
-        *self = *self * scalar
+    fn mul_assign(&mut self, rhs: f64) {
+        *self = *self * rhs;
     }
 }
 
 impl MulAssign<Self> for Variable<'_> {
     #[inline]
-    fn mul_assign(&mut self, other: Self) {
-        *self = *self * other
+    fn mul_assign(&mut self, rhs: Self) {
+        *self = *self * rhs;
     }
 }
 
 impl DivAssign<f64> for Variable<'_> {
     #[inline]
-    fn div_assign(&mut self, scalar: f64) {
-        *self = *self / scalar
+    fn div_assign(&mut self, rhs: f64) {
+        *self = *self / rhs;
     }
 }
 
 impl DivAssign<Self> for Variable<'_> {
     #[inline]
-    fn div_assign(&mut self, other: Self) {
-        *self = *self / other
+    fn div_assign(&mut self, rhs: Self) {
+        *self = *self / rhs;
     }
 }

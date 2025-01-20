@@ -13,14 +13,14 @@ impl Variable<'_> {
 
     #[inline]
     pub fn powf(self, power: f64) -> Self {
-        self.apply_scalar_function(f64::powf, |x, power| power * x.powf(power - 1.0), power)
+        self.apply_scalar_function(f64::powf, |x, p| p * x.powf(p - 1.0), power)
     }
 
     #[inline]
     pub fn powi(self, power: i32) -> Self {
         self.apply_scalar_function::<i32>(
             f64::powi,
-            |x, power| power as f64 * x.powi(power - 1),
+            |x, p| f64::from(p) * x.powi(p - 1),
             power,
         )
     }
@@ -32,7 +32,7 @@ impl Variable<'_> {
 
     #[inline]
     pub fn sqrt(self) -> Self {
-        self.apply_unary_function(f64::sqrt, |x| 0.5 * x.sqrt().recip())
+        self.apply_unary_function(f64::sqrt, |x| 0.5f64 * x.sqrt().recip())
     }
 
     #[inline]

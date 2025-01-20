@@ -14,7 +14,7 @@ type UnaryFn<T> = fn(T) -> T;
 
 impl Variable<'_> {
     #[inline]
-    pub fn value(&self) -> f64 {
+    pub const fn value(&self) -> f64 {
         self.value
     }
 
@@ -22,12 +22,12 @@ impl Variable<'_> {
     pub fn compute_gradients(&self) -> Gradients {
         let operations = &mut self.tape.operations.borrow_mut();
         let count = (*operations).len();
-        let mut grads = vec![0.0; count];
-        grads[self.index] = 1.0;
+        let mut grads = vec![0.0_f64; count];
+        grads[self.index] = 1.0_f64;
 
         for (i, operation) in (*operations).iter().enumerate().rev() {
             let grad = grads[i];
-            if grad == 0.0 {
+            if grad == 0.0_f64 {
                 continue;
             }
             for j in 0..2 {
@@ -38,7 +38,7 @@ impl Variable<'_> {
         Gradients(grads)
     }
 
-    #[inline(always)]
+    #[inline]
     pub fn apply_unary_function(&self, f: UnaryFn<f64>, df: UnaryFn<f64>) -> Self {
         Variable {
             index: {
@@ -52,7 +52,7 @@ impl Variable<'_> {
         }
     }
 
-    #[inline(always)]
+    #[inline]
     pub fn apply_scalar_function<T: Copy>(
         &self,
         f: BinaryFn<f64, T>,
@@ -74,7 +74,7 @@ impl Variable<'_> {
         }
     }
 
-    #[inline(always)]
+    #[inline]
     pub fn apply_binary_function(
         &self,
         other: &Self,

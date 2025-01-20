@@ -9,13 +9,15 @@ pub struct Tape {
 
 impl Tape {
     #[inline]
-    pub fn new() -> Self {
+    #[must_use]
+    pub const fn new() -> Self {
         Self {
             operations: RefCell::new(Vec::new()),
         }
     }
 
     #[inline]
+    #[must_use]
     pub fn with_capacity(capacity: usize) -> Self {
         Self {
             operations: RefCell::new(Vec::with_capacity(capacity)),
