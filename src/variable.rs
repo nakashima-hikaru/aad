@@ -12,7 +12,7 @@ pub struct Variable<'a> {
 type BinaryFn<T, S = T> = fn(T, S) -> T;
 type UnaryFn<T> = fn(T) -> T;
 
-impl<'a> Variable<'a> {
+impl Variable<'_> {
     #[inline]
     pub fn value(&self) -> f64 {
         self.value
@@ -77,7 +77,7 @@ impl<'a> Variable<'a> {
     #[inline(always)]
     pub fn apply_binary_function(
         &self,
-        other: &Variable<'a>,
+        other: &Self,
         f: BinaryFn<f64>,
         dfdx: BinaryFn<f64>,
         dfdy: BinaryFn<f64>,
