@@ -1,6 +1,6 @@
 use crate::variable::Variable;
 
-impl<'a> Variable<'a> {
+impl Variable<'_> {
     #[inline]
     pub fn sin(self) -> Self {
         self.apply_unary_function(f64::sin, f64::cos)

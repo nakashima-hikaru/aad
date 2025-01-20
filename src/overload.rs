@@ -1,2 +1,2 @@
-mod operator;
 mod math;
+mod operator;

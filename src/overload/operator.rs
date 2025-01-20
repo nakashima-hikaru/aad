@@ -1,6 +1,6 @@
-use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 use crate::operation_record::OperationRecord;
 use crate::variable::Variable;
+use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 
 impl Neg for Variable<'_> {
     type Output = Self;
@@ -19,7 +19,7 @@ impl Neg for Variable<'_> {
     }
 }
 
-impl<'a> Add<Self> for Variable<'a> {
+impl Add<Self> for Variable<'_> {
     type Output = Self;
 
     #[inline]
@@ -85,7 +85,7 @@ impl<'a> Div<Self> for Variable<'a> {
     }
 }
 
-impl<'a> Add<f64> for Variable<'a> {
+impl Add<f64> for Variable<'_> {
     type Output = Self;
 
     #[inline]
@@ -112,7 +112,7 @@ impl<'a> Add<Variable<'a>> for f64 {
     }
 }
 
-impl<'a> Sub<f64> for Variable<'a> {
+impl Sub<f64> for Variable<'_> {
     type Output = Self;
 
     #[inline]
@@ -139,7 +139,7 @@ impl<'a> Sub<Variable<'a>> for f64 {
     }
 }
 
-impl<'a> Mul<f64> for Variable<'a> {
+impl Mul<f64> for Variable<'_> {
     type Output = Self;
 
     #[inline]
@@ -166,7 +166,7 @@ impl<'a> Mul<Variable<'a>> for f64 {
     }
 }
 
-impl<'a> Div<f64> for Variable<'a> {
+impl Div<f64> for Variable<'_> {
     type Output = Self;
 
     #[inline]
