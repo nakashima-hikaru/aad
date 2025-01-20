@@ -2,6 +2,7 @@ pub(crate) mod gradients;
 pub(crate) mod operation_record;
 pub mod tape;
 pub(crate) mod variable;
+mod overload;
 
 pub use tape::Tape;
 
