@@ -13,7 +13,8 @@ enables gradient computation for scalar values through a flexible and extensible
 - **High Performance**: The library is designed to be both efficient and scalable, with minimal overhead.
     - Benchmarks show it is as fast or faster compared to [
       `RustQuant_autodiff`](https://github.com/avhz/RustQuant/tree/main/crates/RustQuant_autodiff).
-    - Note: `RustQuant_autodiff` includes extra dependencies, which may require additional system setup when installing
+    - Note: [
+      `RustQuant_autodiff`](https://github.com/avhz/RustQuant/tree/main/crates/RustQuant_autodiff) includes extra dependencies, which may require additional system setup when installing
       on Linux.
 - **No Dependencies**: The library is self-contained and does not rely on any external dependencies.
 
