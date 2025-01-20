@@ -1,6 +1,8 @@
 # AAD
 
 [![CI](https://github.com/nakashima-hikaru/aad/actions/workflows/ci.yml/badge.svg)](https://github.com/nakashima-hikaru/aad/actions/workflows/ci.yml)
+[![Crates.io](https://img.shields.io/crates/v/aad.svg)](https://crates.io/crates/aad)
+[![Docs.rs](https://img.shields.io/docsrs/aad)](https://docs.rs/aad)
 
 This crate provides tools for implementing adjoint(a.k.a. reverse-mode) automatic differentiation in Rust. It
 enables gradient computation for scalar values through a flexible and extensible API.
@@ -11,6 +13,8 @@ enables gradient computation for scalar values through a flexible and extensible
 - **High Performance**: The library is designed to be both efficient and scalable, with minimal overhead.
     - Benchmarks show it is as fast or faster compared to [
       `RustQuant_autodiff`](https://github.com/avhz/RustQuant/tree/main/crates/RustQuant_autodiff).
+    - Note: `RustQuant_autodiff` includes extra dependencies, which may require additional system setup when installing
+      on Linux.
 - **No Dependencies**: The library is self-contained and does not rely on any external dependencies.
 
 ## Quick Start
