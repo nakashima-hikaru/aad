@@ -1,11 +1,11 @@
-use crate::var::Var;
-pub struct Grads(pub(crate) Vec<f64>);
+use crate::var::Variable;
+pub struct Gradients(pub(crate) Vec<f64>);
 
-impl Grads {
-    pub fn get_one(&self, x: &Var) -> f64 {
-        self.0[x.idx]
+impl Gradients {
+    pub fn get_gradient(&self, x: &Variable) -> f64 {
+        self.0[x.index]
     }
-    pub fn get(&self, vars: &[Var]) -> Vec<f64> {
-        vars.iter().map(|var| self.get_one(var)).collect()
+    pub fn get_gradients(&self, vars: &[Variable]) -> Vec<f64> {
+        vars.iter().map(|var| self.get_gradient(var)).collect()
     }
 }

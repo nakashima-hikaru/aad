@@ -1,11 +1,11 @@
-use crate::grads::Grads;
-use crate::operations::Operation;
+use crate::grads::Gradients;
+use crate::operations::OperationRecord;
 use crate::tape::Tape;
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 
 #[derive(Clone, Copy, Debug)]
-pub struct Var<'a> {
-    pub(crate) idx: usize,
+pub struct Variable<'a> {
+    pub(crate) index: usize,
     pub(crate) tape: &'a Tape,
     pub(crate) value: f64,
 }
@@ -13,18 +13,18 @@ pub struct Var<'a> {
 type BinaryFn<T> = fn(T, T) -> T;
 type UnaryFn<T> = fn(T) -> T;
 
-impl<'a> Var<'a> {
+impl<'a> Variable<'a> {
     #[inline]
     pub fn value(self) -> f64 {
         self.value
     }
 
     #[inline]
-    pub fn backward(self) -> Grads {
+    pub fn compute_gradients(self) -> Gradients {
         let operations = &mut self.tape.operations.borrow_mut();
         let count = (*operations).len();
         let mut grads = vec![0.0; count];
-        grads[self.idx] = 1.0;
+        grads[self.index] = 1.0;
 
         for (i, operation) in (*operations).iter().enumerate().rev() {
             let grad = grads[i];
@@ -36,71 +36,71 @@ impl<'a> Var<'a> {
             }
         }
 
-        Grads(grads)
+        Gradients(grads)
     }
 
     #[inline]
-    pub fn sin(self) -> Var<'a> {
-        self.custom_unary_fn(f64::sin, f64::cos)
+    pub fn sin(self) -> Variable<'a> {
+        self.apply_unary_function(f64::sin, f64::cos)
     }
 
     #[inline]
-    pub fn ln(self) -> Var<'a> {
-        self.custom_unary_fn(f64::ln, f64::recip)
+    pub fn ln(self) -> Variable<'a> {
+        self.apply_unary_function(f64::ln, f64::recip)
     }
 
     #[inline]
-    pub fn powf(self, power: f64) -> Var<'a> {
-        self.custom_scalar_fn(f64::powf, |x, power| power * x.powf(power - 1.0), power)
+    pub fn powf(self, power: f64) -> Variable<'a> {
+        self.apply_scalar_function(f64::powf, |x, power| power * x.powf(power - 1.0), power)
     }
 
     #[inline]
-    pub fn exp(self) -> Var<'a> {
-        self.custom_unary_fn(f64::exp, f64::exp)
+    pub fn exp(self) -> Variable<'a> {
+        self.apply_unary_function(f64::exp, f64::exp)
     }
 
     #[inline]
-    pub fn sqrt(self) -> Var<'a> {
-        self.custom_unary_fn(f64::sqrt, |x| 0.5 * x.sqrt().recip())
+    pub fn sqrt(self) -> Variable<'a> {
+        self.apply_unary_function(f64::sqrt, |x| 0.5 * x.sqrt().recip())
     }
 
     #[inline]
-    pub fn cos(self) -> Var<'a> {
-        self.custom_unary_fn(f64::cos, |x| -f64::sin(x))
+    pub fn cos(self) -> Variable<'a> {
+        self.apply_unary_function(f64::cos, |x| -f64::sin(x))
     }
 
     #[inline]
-    pub fn tan(self) -> Var<'a> {
-        self.custom_unary_fn(f64::tan, |x| f64::cos(x).powi(2).recip())
+    pub fn tan(self) -> Variable<'a> {
+        self.apply_unary_function(f64::tan, |x| f64::cos(x).powi(2).recip())
     }
 
     #[inline]
-    pub fn sinh(self) -> Var<'a> {
-        self.custom_unary_fn(f64::sinh, f64::cosh)
+    pub fn sinh(self) -> Variable<'a> {
+        self.apply_unary_function(f64::sinh, f64::cosh)
     }
 
     #[inline]
-    pub fn cosh(self) -> Var<'a> {
-        self.custom_unary_fn(f64::cosh, f64::sinh)
+    pub fn cosh(self) -> Variable<'a> {
+        self.apply_unary_function(f64::cosh, f64::sinh)
     }
 
     #[inline]
-    pub fn tanh(self) -> Var<'a> {
-        self.custom_unary_fn(f64::tanh, |x| f64::cosh(x).powi(2).recip())
+    pub fn tanh(self) -> Variable<'a> {
+        self.apply_unary_function(f64::tanh, |x| f64::cosh(x).powi(2).recip())
     }
 
     #[inline]
-    pub fn recip(self) -> Var<'a> {
-        self.custom_unary_fn(f64::recip, |x| -(x * x).recip())
+    pub fn recip(self) -> Variable<'a> {
+        self.apply_unary_function(f64::recip, |x| -(x * x).recip())
     }
 
     #[inline(always)]
-    pub fn custom_unary_fn(&self, f: UnaryFn<f64>, df: UnaryFn<f64>) -> Var<'a> {
-        Var {
-            idx: {
+    pub fn apply_unary_function(&self, f: UnaryFn<f64>, df: UnaryFn<f64>) -> Variable<'a> {
+        Variable {
+            index: {
                 let operations = &mut self.tape.operations.borrow_mut();
                 let count = (*operations).len();
-                (*operations).push(Operation([(self.idx, df(self.value)), (0, 0.0)]));
+                (*operations).push(OperationRecord([(self.index, df(self.value)), (0, 0.0)]));
                 count
             },
             tape: self.tape,
@@ -109,12 +109,12 @@ impl<'a> Var<'a> {
     }
 
     #[inline(always)]
-    pub fn custom_scalar_fn(&self, f: BinaryFn<f64>, df: BinaryFn<f64>, scalar: f64) -> Var<'a> {
-        Var {
-            idx: {
+    pub fn apply_scalar_function(&self, f: BinaryFn<f64>, df: BinaryFn<f64>, scalar: f64) -> Variable<'a> {
+        Variable {
+            index: {
                 let operations = &mut self.tape.operations.borrow_mut();
                 let count = (*operations).len();
-                (*operations).push(Operation([(self.idx, df(self.value, scalar)), (0, 0.0)]));
+                (*operations).push(OperationRecord([(self.index, df(self.value, scalar)), (0, 0.0)]));
                 count
             },
             tape: self.tape,
@@ -123,20 +123,20 @@ impl<'a> Var<'a> {
     }
 
     #[inline(always)]
-    pub fn custom_binary_fn(
+    pub fn apply_binary_function(
         &self,
-        other: &Var<'a>,
+        other: &Variable<'a>,
         f: BinaryFn<f64>,
         dfdx: BinaryFn<f64>,
         dfdy: BinaryFn<f64>,
-    ) -> Var<'a> {
-        Var {
-            idx: {
+    ) -> Variable<'a> {
+        Variable {
+            index: {
                 let operations = &mut self.tape.operations.borrow_mut();
                 let count = (*operations).len();
-                (*operations).push(Operation([
-                    (self.idx, dfdx(self.value, other.value)),
-                    (other.idx, dfdy(self.value, other.value)),
+                (*operations).push(OperationRecord([
+                    (self.index, dfdx(self.value, other.value)),
+                    (other.index, dfdy(self.value, other.value)),
                 ]));
                 count
             },
@@ -146,15 +146,15 @@ impl<'a> Var<'a> {
     }
 }
 
-impl Neg for Var<'_> {
+impl Neg for Variable<'_> {
     type Output = Self;
     #[inline]
     fn neg(self) -> Self::Output {
-        Var {
-            idx: {
+        Variable {
+            index: {
                 let mut operations = self.tape.operations.borrow_mut();
                 let count = (*operations).len();
-                (*operations).push(Operation([(self.idx, -1.0), (0, 0.0)]));
+                (*operations).push(OperationRecord([(self.index, -1.0), (0, 0.0)]));
                 count
             },
             tape: self.tape,
@@ -163,16 +163,16 @@ impl Neg for Var<'_> {
     }
 }
 
-impl<'a> Add<Var<'a>> for Var<'a> {
+impl<'a> Add<Variable<'a>> for Variable<'a> {
     type Output = Self;
 
     #[inline]
-    fn add(self, other: Var<'a>) -> Self::Output {
-        Var {
-            idx: {
+    fn add(self, other: Variable<'a>) -> Self::Output {
+        Variable {
+            index: {
                 let operations = &mut self.tape.operations.borrow_mut();
                 let count = (*operations).len();
-                (*operations).push(Operation([(self.idx, 1.0), (other.idx, 1.0)]));
+                (*operations).push(OperationRecord([(self.index, 1.0), (other.index, 1.0)]));
                 count
             },
             tape: self.tape,
@@ -181,16 +181,16 @@ impl<'a> Add<Var<'a>> for Var<'a> {
     }
 }
 
-impl<'a> Sub<Var<'a>> for Var<'a> {
+impl<'a> Sub<Variable<'a>> for Variable<'a> {
     type Output = Self;
 
     #[inline]
-    fn sub(self, other: Var<'a>) -> Self::Output {
-        Var {
-            idx: {
+    fn sub(self, other: Variable<'a>) -> Self::Output {
+        Variable {
+            index: {
                 let operations = &mut self.tape.operations.borrow_mut();
                 let count = (*operations).len();
-                (*operations).push(Operation([(self.idx, 1.0), (other.idx, -1.0)]));
+                (*operations).push(OperationRecord([(self.index, 1.0), (other.index, -1.0)]));
                 count
             },
             tape: self.tape,
@@ -199,18 +199,18 @@ impl<'a> Sub<Var<'a>> for Var<'a> {
     }
 }
 
-impl<'a> Mul<Var<'a>> for Var<'a> {
+impl<'a> Mul<Variable<'a>> for Variable<'a> {
     type Output = Self;
 
     #[inline]
-    fn mul(self, other: Var<'a>) -> Self::Output {
-        Var {
-            idx: {
+    fn mul(self, other: Variable<'a>) -> Self::Output {
+        Variable {
+            index: {
                 let operations = &mut self.tape.operations.borrow_mut();
                 let count = (*operations).len();
-                (*operations).push(Operation([
-                    (self.idx, other.value),
-                    (other.idx, self.value),
+                (*operations).push(OperationRecord([
+                    (self.index, other.value),
+                    (other.index, self.value),
                 ]));
                 count
             },
@@ -220,25 +220,25 @@ impl<'a> Mul<Var<'a>> for Var<'a> {
     }
 }
 
-impl<'a> Div<Var<'a>> for Var<'a> {
+impl<'a> Div<Variable<'a>> for Variable<'a> {
     type Output = Self;
 
     #[inline]
-    fn div(self, other: Var<'a>) -> Self::Output {
-        self.custom_binary_fn(&other, |x, y| x / y, |_, y| y.recip(), |x, y| -x / (y * y))
+    fn div(self, other: Variable<'a>) -> Self::Output {
+        self.apply_binary_function(&other, |x, y| x / y, |_, y| y.recip(), |x, y| -x / (y * y))
     }
 }
 
-impl<'a> Add<f64> for Var<'a> {
-    type Output = Var<'a>;
+impl<'a> Add<f64> for Variable<'a> {
+    type Output = Variable<'a>;
 
     #[inline]
-    fn add(self, scalar: f64) -> Var<'a> {
-        Var {
-            idx: {
+    fn add(self, scalar: f64) -> Variable<'a> {
+        Variable {
+            index: {
                 let mut operations = self.tape.operations.borrow_mut();
                 let count = (*operations).len();
-                (*operations).push(Operation([(self.idx, 1.0), (0, 0.0)]));
+                (*operations).push(OperationRecord([(self.index, 1.0), (0, 0.0)]));
                 count
             },
             tape: self.tape,
@@ -247,25 +247,25 @@ impl<'a> Add<f64> for Var<'a> {
     }
 }
 
-impl<'a> Add<Var<'a>> for f64 {
-    type Output = Var<'a>;
+impl<'a> Add<Variable<'a>> for f64 {
+    type Output = Variable<'a>;
 
     #[inline]
-    fn add(self, var: Var<'a>) -> Var<'a> {
+    fn add(self, var: Variable<'a>) -> Variable<'a> {
         var + self
     }
 }
 
-impl<'a> Sub<f64> for Var<'a> {
-    type Output = Var<'a>;
+impl<'a> Sub<f64> for Variable<'a> {
+    type Output = Variable<'a>;
 
     #[inline]
     fn sub(self, scalar: f64) -> Self::Output {
-        Var {
-            idx: {
+        Variable {
+            index: {
                 let mut operations = self.tape.operations.borrow_mut();
                 let count = (*operations).len();
-                (*operations).push(Operation([(self.idx, 1.0), (0, 0.0)]));
+                (*operations).push(OperationRecord([(self.index, 1.0), (0, 0.0)]));
                 count
             },
             tape: self.tape,
@@ -274,25 +274,25 @@ impl<'a> Sub<f64> for Var<'a> {
     }
 }
 
-impl<'a> Sub<Var<'a>> for f64 {
-    type Output = Var<'a>;
+impl<'a> Sub<Variable<'a>> for f64 {
+    type Output = Variable<'a>;
 
     #[inline]
-    fn sub(self, var: Var<'a>) -> Var<'a> {
+    fn sub(self, var: Variable<'a>) -> Variable<'a> {
         -var + self
     }
 }
 
-impl<'a> Mul<f64> for Var<'a> {
-    type Output = Var<'a>;
+impl<'a> Mul<f64> for Variable<'a> {
+    type Output = Variable<'a>;
 
     #[inline]
-    fn mul(self, scalar: f64) -> Var<'a> {
-        Var {
-            idx: {
+    fn mul(self, scalar: f64) -> Variable<'a> {
+        Variable {
+            index: {
                 let mut operations = self.tape.operations.borrow_mut();
                 let count = (*operations).len();
-                (*operations).push(Operation([(self.idx, scalar), (0, 0.0)]));
+                (*operations).push(OperationRecord([(self.index, scalar), (0, 0.0)]));
                 count
             },
             tape: self.tape,
@@ -301,25 +301,25 @@ impl<'a> Mul<f64> for Var<'a> {
     }
 }
 
-impl<'a> Mul<Var<'a>> for f64 {
-    type Output = Var<'a>;
+impl<'a> Mul<Variable<'a>> for f64 {
+    type Output = Variable<'a>;
 
     #[inline]
-    fn mul(self, var: Var<'a>) -> Var<'a> {
+    fn mul(self, var: Variable<'a>) -> Variable<'a> {
         var * self
     }
 }
 
-impl<'a> Div<f64> for Var<'a> {
-    type Output = Var<'a>;
+impl<'a> Div<f64> for Variable<'a> {
+    type Output = Variable<'a>;
 
     #[inline]
-    fn div(self, scalar: f64) -> Var<'a> {
-        Var {
-            idx: {
+    fn div(self, scalar: f64) -> Variable<'a> {
+        Variable {
+            index: {
                 let operations = &mut self.tape.operations.borrow_mut();
                 let count = (*operations).len();
-                (*operations).push(Operation([(self.idx, scalar.recip()), (0, 0.0)]));
+                (*operations).push(OperationRecord([(self.index, scalar.recip()), (0, 0.0)]));
                 count
             },
             tape: self.tape,
@@ -329,67 +329,67 @@ impl<'a> Div<f64> for Var<'a> {
 }
 
 #[allow(clippy::suspicious_arithmetic_impl)]
-impl<'a> Div<Var<'a>> for f64 {
-    type Output = Var<'a>;
+impl<'a> Div<Variable<'a>> for f64 {
+    type Output = Variable<'a>;
 
     #[inline]
-    fn div(self, var: Var<'a>) -> Var<'a> {
+    fn div(self, var: Variable<'a>) -> Variable<'a> {
         var.recip() * self
     }
 }
 
-impl AddAssign<f64> for Var<'_> {
+impl AddAssign<f64> for Variable<'_> {
     #[inline]
     fn add_assign(&mut self, scalar: f64) {
         *self = *self + scalar
     }
 }
 
-impl<'a> AddAssign<Var<'a>> for Var<'a> {
+impl<'a> AddAssign<Variable<'a>> for Variable<'a> {
     #[inline]
-    fn add_assign(&mut self, other: Var<'a>) {
+    fn add_assign(&mut self, other: Variable<'a>) {
         *self = *self + other
     }
 }
 
-impl SubAssign<f64> for Var<'_> {
+impl SubAssign<f64> for Variable<'_> {
     #[inline]
     fn sub_assign(&mut self, scalar: f64) {
         *self = *self - scalar
     }
 }
 
-impl<'a> SubAssign<Var<'a>> for Var<'a> {
+impl<'a> SubAssign<Variable<'a>> for Variable<'a> {
     #[inline]
-    fn sub_assign(&mut self, other: Var<'a>) {
+    fn sub_assign(&mut self, other: Variable<'a>) {
         *self = *self - other
     }
 }
 
-impl MulAssign<f64> for Var<'_> {
+impl MulAssign<f64> for Variable<'_> {
     #[inline]
     fn mul_assign(&mut self, scalar: f64) {
         *self = *self * scalar
     }
 }
 
-impl<'a> MulAssign<Var<'a>> for Var<'a> {
+impl<'a> MulAssign<Variable<'a>> for Variable<'a> {
     #[inline]
-    fn mul_assign(&mut self, other: Var<'a>) {
+    fn mul_assign(&mut self, other: Variable<'a>) {
         *self = *self * other
     }
 }
 
-impl DivAssign<f64> for Var<'_> {
+impl DivAssign<f64> for Variable<'_> {
     #[inline]
     fn div_assign(&mut self, scalar: f64) {
         *self = *self / scalar
     }
 }
 
-impl<'a> DivAssign<Var<'a>> for Var<'a> {
+impl<'a> DivAssign<Variable<'a>> for Variable<'a> {
     #[inline]
-    fn div_assign(&mut self, other: Var<'a>) {
+    fn div_assign(&mut self, other: Variable<'a>) {
         *self = *self / other
     }
 }

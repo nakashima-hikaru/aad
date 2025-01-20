@@ -20,15 +20,15 @@ use aad::Tape;
 fn main() {
     let tape = Tape::default();
 
-    let x = tape.var(2.0);
-    let y = tape.var(3.0);
+    let x = tape.crate_variable(2.0);
+    let y = tape.crate_variable(3.0);
 
     let z = (x + y) * x.sin();
 
     println!("{}", z.value());
 
-    let grads = z.backward();
-    println!("Gradients are: {:?}", grads.get(&[x, y]));
+    let grads = z.compute_gradients();
+    println!("Gradients are: {:?}", grads.get_gradients(&[x, y]));
 }
 ```
 

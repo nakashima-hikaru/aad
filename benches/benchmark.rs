@@ -8,18 +8,18 @@ fn large_computation_graph_benchmark(c: &mut Criterion) {
         b.iter(|| {
             let tape = Tape::default();
 
-            let x0 = tape.var(1.0);
-            let x1 = tape.var(2.0);
-            let x2 = tape.var(3.0);
-            let x3 = tape.var(4.0);
-            let x4 = tape.var(5.0);
+            let x0 = tape.create_variable(1.0);
+            let x1 = tape.create_variable(2.0);
+            let x2 = tape.create_variable(3.0);
+            let x3 = tape.create_variable(4.0);
+            let x4 = tape.create_variable(5.0);
 
             let mut result = x0;
             for i in 0..100000 {
                 result += (((result + x1) * x2.sin()) + (x3 * x4.ln())) * (x2 + (i as f64).ln());
             }
             black_box(result);
-            let grads = result.backward();
+            let grads = result.compute_gradients();
             black_box(grads);
         })
     });
