@@ -23,7 +23,7 @@ impl<'a> Add<Self> for Variable<'a> {
     type Output = Self;
 
     #[inline]
-    fn add(self, other: Variable<'a>) -> Self::Output {
+    fn add(self, other: Self) -> Self::Output {
         Variable {
             index: {
                 let operations = &mut self.tape.operations.borrow_mut();
@@ -86,7 +86,7 @@ impl<'a> Div<Self> for Variable<'a> {
 }
 
 impl<'a> Add<f64> for Variable<'a> {
-    type Output = Variable<'a>;
+    type Output = Self;
 
     #[inline]
     fn add(self, scalar: f64) -> Self::Output {
@@ -113,7 +113,7 @@ impl<'a> Add<Variable<'a>> for f64 {
 }
 
 impl<'a> Sub<f64> for Variable<'a> {
-    type Output = Variable<'a>;
+    type Output = Self;
 
     #[inline]
     fn sub(self, scalar: f64) -> Self::Output {
@@ -140,7 +140,7 @@ impl<'a> Sub<Variable<'a>> for f64 {
 }
 
 impl<'a> Mul<f64> for Variable<'a> {
-    type Output = Variable<'a>;
+    type Output = Self;
 
     #[inline]
     fn mul(self, scalar: f64) -> Self::Output {
@@ -167,7 +167,7 @@ impl<'a> Mul<Variable<'a>> for f64 {
 }
 
 impl<'a> Div<f64> for Variable<'a> {
-    type Output = Variable<'a>;
+    type Output = Self;
 
     #[inline]
     fn div(self, scalar: f64) -> Self::Output {
