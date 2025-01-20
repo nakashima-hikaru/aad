@@ -10,7 +10,7 @@ pub struct Variable<'a> {
     pub(crate) value: f64,
 }
 
-type BinaryFn<T> = fn(T, T) -> T;
+type BinaryFn<T, S = T> = fn(T, S) -> T;
 type UnaryFn<T> = fn(T) -> T;
 
 impl<'a> Variable<'a> {
@@ -52,6 +52,15 @@ impl<'a> Variable<'a> {
     #[inline]
     pub fn powf(self, power: f64) -> Self {
         self.apply_scalar_function(f64::powf, |x, power| power * x.powf(power - 1.0), power)
+    }
+
+    #[inline]
+    pub fn powi(self, power: i32) -> Self {
+        self.apply_scalar_function::<i32>(
+            f64::powi,
+            |x, power| power as f64 * x.powi(power - 1),
+            power,
+        )
     }
 
     #[inline]
@@ -109,11 +118,11 @@ impl<'a> Variable<'a> {
     }
 
     #[inline(always)]
-    pub fn apply_scalar_function(
+    pub fn apply_scalar_function<T: Copy>(
         &self,
-        f: BinaryFn<f64>,
-        df: BinaryFn<f64>,
-        scalar: f64,
+        f: BinaryFn<f64, T>,
+        df: BinaryFn<f64, T>,
+        scalar: T,
     ) -> Self {
         Variable {
             index: {
@@ -353,7 +362,7 @@ impl AddAssign<f64> for Variable<'_> {
     }
 }
 
-impl<'a> AddAssign<Self> for Variable<'a> {
+impl AddAssign<Self> for Variable<'_> {
     #[inline]
     fn add_assign(&mut self, other: Self) {
         *self = *self + other
@@ -367,7 +376,7 @@ impl SubAssign<f64> for Variable<'_> {
     }
 }
 
-impl<'a> SubAssign<Self> for Variable<'a> {
+impl SubAssign<Self> for Variable<'_> {
     #[inline]
     fn sub_assign(&mut self, other: Self) {
         *self = *self - other
@@ -381,7 +390,7 @@ impl MulAssign<f64> for Variable<'_> {
     }
 }
 
-impl<'a> MulAssign<Self> for Variable<'a> {
+impl MulAssign<Self> for Variable<'_> {
     #[inline]
     fn mul_assign(&mut self, other: Self) {
         *self = *self * other
@@ -395,7 +404,7 @@ impl DivAssign<f64> for Variable<'_> {
     }
 }
 
-impl<'a> DivAssign<Self> for Variable<'a> {
+impl DivAssign<Self> for Variable<'_> {
     #[inline]
     fn div_assign(&mut self, other: Self) {
         *self = *self / other
