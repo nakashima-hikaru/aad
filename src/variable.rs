@@ -11,6 +11,7 @@ pub struct Variable<'a> {
 
 type BinaryFn<T, S = T> = fn(T, S) -> T;
 type UnaryFn<T> = fn(T) -> T;
+type BinaryPairFn<T> = fn(T, T) -> (T, T);
 
 impl Variable<'_> {
     #[inline]
@@ -79,17 +80,14 @@ impl Variable<'_> {
         &self,
         other: &Self,
         f: BinaryFn<f64>,
-        dfdx: BinaryFn<f64>,
-        dfdy: BinaryFn<f64>,
+        dfdx: BinaryPairFn<f64>,
     ) -> Self {
         Variable {
             index: {
                 let operations = &mut self.tape.operations.borrow_mut();
                 let count = (*operations).len();
-                (*operations).push(OperationRecord([
-                    (self.index, dfdx(self.value, other.value)),
-                    (other.index, dfdy(self.value, other.value)),
-                ]));
+                let df = dfdx(self.value, other.value);
+                (*operations).push(OperationRecord([(self.index, df.0), (other.index, df.1)]));
                 count
             },
             tape: self.tape,
