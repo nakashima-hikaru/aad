@@ -1,7 +1,6 @@
 use crate::variable::Variable;
 use std::ops::{Mul, Neg, Sub};
 
-//
 impl Variable<'_> {
     #[inline]
     #[must_use]

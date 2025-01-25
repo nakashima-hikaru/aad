@@ -37,6 +37,7 @@ aad = "0.3.0"
 
 ```rust
 use aad::Tape;
+use aad::ScalarLike;
 
 fn main() {
     // Initialize a computation tape
@@ -46,8 +47,12 @@ fn main() {
     let x = tape.create_variable(2.0);
     let y = tape.create_variable(3.0);
 
-    // Build a computation graph: z = (x + y) * sin(x)
-    let z = (x + y) * x.sin();
+    // Create type-agnostic mathematical functions that work with both Variable and f64:
+    fn f<S: ScalarLike>(x: S, y: S) -> S {
+        (x + y) * x.sin()
+    }
+    
+    let z = f(x, y);
 
     // Forward pass: compute value
     println!("z = {:.2}", z.value()); // Output: z = 4.55

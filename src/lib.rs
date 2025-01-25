@@ -1,9 +1,11 @@
 pub mod gradients;
 pub(crate) mod operation_record;
 mod overload;
+pub mod scalar_like;
 pub mod tape;
 pub mod variable;
 
+pub use scalar_like::ScalarLike;
 pub use tape::Tape;
 pub use variable::Variable;
 
