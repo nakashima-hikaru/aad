@@ -15,11 +15,13 @@ type BinaryPairFn<T> = fn(T, T) -> (T, T);
 
 impl Variable<'_> {
     #[inline]
+    #[must_use]
     pub const fn value(&self) -> f64 {
         self.value
     }
 
     #[inline]
+    #[must_use]
     pub fn compute_gradients(&self) -> Gradients {
         let operations = &mut self.tape.operations.borrow_mut();
         let count = (*operations).len();

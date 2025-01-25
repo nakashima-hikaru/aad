@@ -16,12 +16,12 @@ fn large_computation_graph_benchmark(c: &mut Criterion) {
 
             let mut result = x0;
             for i in 0..100000 {
-                result += (((result + x1) * x2.sin()) + (x3 * x4.ln())) * (x2 + (i as f64).ln());
+                result += (((result + x1) * x2.sin()) + (x3 * x4.ln())) * (x2 + f64::from(i).ln());
             }
             black_box(result);
             let grads = result.compute_gradients();
             black_box(grads);
-        })
+        });
     });
 }
 
@@ -38,12 +38,12 @@ fn large_computation_graph_benchmark_rust_quant(c: &mut Criterion) {
 
             let mut result = x0;
             for i in 0..100000 {
-                result += (((result + x1) * x2.sin()) + (x3 * x4.ln())) * (x2 + (i as f64).ln());
+                result += (((result + x1) * x2.sin()) + (x3 * x4.ln())) * (x2 + f64::from(i).ln());
             }
             black_box(result);
             let grads = result.accumulate();
             black_box(grads);
-        })
+        });
     });
 }
 
@@ -58,12 +58,12 @@ fn large_computation_graph_benchmark_f64(c: &mut Criterion) {
 
             let mut result = x0;
             for i in 0..10000 {
-                result += (((result + x1) * x2.sin()) + (x3 * x4.ln())) * (x2 + (i as f64).ln());
+                result += (((result + x1) * x2.sin()) + (x3 * x4.ln())) * (x2 + f64::from(i).ln());
                 black_box(result);
             }
 
             black_box(result);
-        })
+        });
     });
 }
 

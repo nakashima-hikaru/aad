@@ -73,7 +73,7 @@ mod tests {
         }
 
         let indices: Vec<_> = variables.iter().map(|var| var.index).collect();
-        let unique_indices: std::collections::HashSet<_> = indices.iter().cloned().collect();
+        let unique_indices: std::collections::HashSet<_> = indices.iter().copied().collect();
         assert_eq!(indices.len(), unique_indices.len());
     }
 }
