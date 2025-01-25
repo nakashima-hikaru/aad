@@ -21,7 +21,7 @@ Add to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-aad = "0.4.0"
+aad = "0.5.0"
 ```
 
 For benchmarks:
