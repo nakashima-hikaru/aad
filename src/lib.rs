@@ -1,10 +1,11 @@
-pub(crate) mod gradients;
+pub mod gradients;
 pub(crate) mod operation_record;
 mod overload;
 pub mod tape;
-pub(crate) mod variable;
+pub mod variable;
 
 pub use tape::Tape;
+pub use variable::Variable;
 
 #[cfg(test)]
 mod tests {
