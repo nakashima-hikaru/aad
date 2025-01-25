@@ -1,50 +1,95 @@
-# AAD
+# AAD: Adjoint Automatic Differentiation
 
 [![CI](https://github.com/nakashima-hikaru/aad/actions/workflows/ci.yml/badge.svg)](https://github.com/nakashima-hikaru/aad/actions/workflows/ci.yml)
 [![Crates.io](https://img.shields.io/crates/v/aad.svg)](https://crates.io/crates/aad)
-[![Docs.rs](https://img.shields.io/docsrs/aad)](https://docs.rs/aad)
+[![Docs.rs](https://docs.rs/aad/badge.svg)](https://docs.rs/aad/latest/aad/)
 
-This crate provides tools for implementing adjoint(a.k.a. reverse-mode) automatic differentiation in Rust. It
-enables gradient computation for scalar values through a flexible and extensible API.
+A Rust library for reverse-mode automatic differentiation (AD), enabling efficient gradient computation for
+scalar-valued functions.
 
-- **User-Friendly Design**: Equations can be manipulated as seamlessly as primitive floating-point types.
-    - This design draws heavy inspiration from the [`rustograd`](https://github.com/msakuta/rustograd) and [
-      `RustQuant_autodiff`](https://github.com/avhz/RustQuant/tree/main/crates/RustQuant_autodiff) library.
-- **High Performance**: The library is designed to be both efficient and scalable, with minimal overhead.
-    - Benchmarks show it is as fast or faster compared to [
+## Features
+
+- **Intuitive API**: Write equations as naturally as primitive `f64` operations.
+    - Operator overloading (`+`, `*`, `sin`, `ln`, etc.) for seamless expression building.
+    - Inspired by [`rustograd`](https://github.com/msakuta/rustograd) and [
       `RustQuant_autodiff`](https://github.com/avhz/RustQuant/tree/main/crates/RustQuant_autodiff).
-    - Note: [
-      `RustQuant_autodiff`](https://github.com/avhz/RustQuant/tree/main/crates/RustQuant_autodiff) includes extra dependencies, which may require additional system setup when installing
-      on Linux.
-- **No Dependencies**: The library is self-contained and does not rely on any external dependencies.
+- **High Performance**: Optimized for minimal runtime overhead.
+    - Benchmarks show competitive performance, often outperforming alternatives in gradient computation (
+      see [Benchmarks](#benchmarks)).
+- **Zero Dependencies**: Core library has no external dependencies.
+    - [`RustQuant_autodiff`](https://github.com/avhz/RustQuant/tree/main/crates/RustQuant_autodiff) includes extra
+      dependencies, which may require additional system setup when installing on Linux.
+    - (Optional `criterion` and `RustQuant_autodiff` for benchmarking only.)
+- **Extensive Math Support**:
+    - Trigonometric (`sin`, `cos`, `tanh`), exponential (`exp`, `powf`), logarithmic (`ln`, `log10`), and more.
+    - Full list in [supported operations](#supported-operations).
+
+## Installation
+
+Add to your `Cargo.toml`:
+
+```toml
+[dependencies]
+aad = "0.3.0"
+```
 
 ## Quick Start
-
-Here's an example of how to use the library:
 
 ```rust
 use aad::Tape;
 
 fn main() {
+    // Initialize a computation tape
     let tape = Tape::default();
 
-    let x = tape.crate_variable(2.0);
-    let y = tape.crate_variable(3.0);
+    // Create variables
+    let x = tape.create_variable(2.0);
+    let y = tape.create_variable(3.0);
 
+    // Build a computation graph: z = (x + y) * sin(x)
     let z = (x + y) * x.sin();
 
-    println!("{}", z.value());
+    // Forward pass: compute value
+    println!("z = {:.2}", z.value()); // Output: z = 4.55
 
+    // Reverse pass: compute gradients
     let grads = z.compute_gradients();
-    println!("Gradients are: {:?}", grads.get_gradients(&[x, y]));
+    println!("Gradients: dx = {:.2}, dy = {:.2}",
+             grads.get_gradient(&x),
+             grads.get_gradient(&y)
+    ); // Output: dx = -2.83, dy = 0.14
 }
 ```
 
+## Supported Operations
+
+### Basic Arithmetic
+
+- `+`, `-`, `*`, `/`, negation
+- Assignment operators (`+=`, `*=`, etc.)
+
+### Mathematical Functions
+
+- **Exponential**: `exp`, `powf`, `sqrt`, `hypot`
+- **Logarithmic**: `ln`, `log`, `log2`, `log10`
+- **Trigonometric**: `sin`, `cos`, `tan`, `asin`, `acos`, `sinh`, `cosh`
+- **Other**: `abs`, `recip`, `cbrt`
+
+See [`math.rs`](./src/overload/math.rs) for full details.
+
 ## Benchmarks
 
-Benchmark results can be viewed [here](https://nakashima-hikaru.github.io/aad/reports/).
+[Detailed results](https://nakashima-hikaru.github.io/aad/reports/)
+
+## Design Notes
+
+- **Tape-based**: All operations are recorded to a `Tape` for efficient reverse-mode traversal.
+- **Lightweight**: Variables are `Copy`-enabled structs with minimal memory footprint.
+
+## Contributing
+
+Contributions are welcome! Open an issue or PR for feature requests, bug fixes, or documentation improvements.
 
 ## License
 
-This project is licensed under the [MIT License](LICENSE).
-
+MIT License. See [LICENSE](LICENSE) for details.
