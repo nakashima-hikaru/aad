@@ -29,7 +29,7 @@ mod tests {
     #[test]
     fn test_add_scalar() {
         let tape = Tape::default();
-        let x = tape.create_variable(2.0);
+        let x = tape.create_variable(2.0_f64);
         let z = x + 5.0;
 
         assert_eq!(z.value(), 7.0);
@@ -55,7 +55,7 @@ mod tests {
     #[test]
     fn test_sub() {
         let tape = Tape::default();
-        let x = tape.create_variable(5.0);
+        let x = tape.create_variable(5.0_f64);
         let y = tape.create_variable(3.0);
         let z = x - y;
 
@@ -70,7 +70,7 @@ mod tests {
     #[test]
     fn test_sub_scalar() {
         let tape = Tape::default();
-        let x = tape.create_variable(7.0);
+        let x = tape.create_variable(7.0_f64);
         let z = x - 4.0;
 
         assert_eq!(z.value(), 3.0);
@@ -84,7 +84,7 @@ mod tests {
     #[test]
     fn test_sub_from_scalar() {
         let tape = Tape::default();
-        let x = tape.create_variable(7.0);
+        let x = tape.create_variable(7.0_f64);
         let z = 4.0 - x;
 
         assert_eq!(z.value(), -3.0);
@@ -112,7 +112,7 @@ mod tests {
     #[test]
     fn test_mul_scalar() {
         let tape = Tape::default();
-        let x = tape.create_variable(2.0);
+        let x = tape.create_variable(2.0_f64);
         let z = x * 5.0;
 
         assert_eq!(z.value(), 10.0);
@@ -141,7 +141,7 @@ mod tests {
     fn test_div_scalar() {
         let tape = Tape::default();
         let x = tape.create_variable(8.0);
-        let z = x / 4.0;
+        let z = x / 4.0_f64;
 
         assert_eq!(z.value(), 2.0);
 
@@ -153,7 +153,7 @@ mod tests {
     #[test]
     fn test_div_scalar_reverse() {
         let tape = Tape::default();
-        let x = tape.create_variable(2.0);
+        let x = tape.create_variable(2.0_f64);
         let z = 10.0 / x;
 
         assert_eq!(z.value(), 5.0);
@@ -167,7 +167,7 @@ mod tests {
     fn test_linear_scalar() {
         let tape = Tape::default();
         let x = tape.create_variable(2.0);
-        let z = 2.0 * x + 5.0;
+        let z = 2.0_f64 * x + 5.0_f64;
 
         assert_eq!(z.value(), 9.0);
 
@@ -208,7 +208,7 @@ mod tests {
         let y = tape.create_variable(3.0);
         let z = (x + y) * y.sin();
 
-        let expected_value = (2.0 + 3.0) * y.sin();
+        let expected_value = (2.0_f64 + 3.0_f64) * y.sin();
         assert!((z.value() - expected_value.value()).abs() < 1e-6);
 
         let grads = z.compute_gradients();
@@ -263,7 +263,7 @@ mod tests {
         let tape = Tape::default();
         let x = tape.create_variable(2.0);
         let z = x.powf(3.0);
-        assert!((z.value() - 8.0).abs() < EPSILON);
+        assert!((z.value() - 8.0_f64).abs() < EPSILON);
 
         let grads = z.compute_gradients();
         assert!((grads.get_gradient(&x) - 12.0).abs() < EPSILON);
@@ -287,7 +287,7 @@ mod tests {
         let x = tape.create_variable(4.0);
         let z = x.sqrt();
 
-        assert!((z.value() - 2.0).abs() < EPSILON);
+        assert!((z.value() - 2.0_f64).abs() < EPSILON);
 
         let grads = z.compute_gradients();
         assert!((grads.get_gradient(&x) - 0.25).abs() < EPSILON);
@@ -299,7 +299,7 @@ mod tests {
         let x = tape.create_variable(0.0);
         let z = x.cos();
 
-        assert!((z.value() - 1.0).abs() < EPSILON);
+        assert!((z.value() - 1.0_f64).abs() < EPSILON);
 
         let grads = z.compute_gradients();
         assert!((grads.get_gradient(&x) - 0.0).abs() < EPSILON);
@@ -311,7 +311,7 @@ mod tests {
         let x = tape.create_variable(0.0);
         let z = x.tan();
 
-        assert!((z.value() - 0.0).abs() < EPSILON);
+        assert!((z.value() - 0.0_f64).abs() < EPSILON);
 
         let grads = z.compute_gradients();
         assert!((grads.get_gradient(&x) - 1.0).abs() < EPSILON);
@@ -323,7 +323,7 @@ mod tests {
         let x = tape.create_variable(0.0);
         let z = x.sinh();
 
-        assert!((z.value() - 0.0).abs() < EPSILON);
+        assert!((z.value() - 0.0_f64).abs() < EPSILON);
 
         let grads = z.compute_gradients();
         assert!((grads.get_gradient(&x) - 1.0).abs() < EPSILON);
@@ -335,7 +335,7 @@ mod tests {
         let x = tape.create_variable(0.0);
         let z = x.cosh();
 
-        assert!((z.value() - 1.0).abs() < EPSILON);
+        assert!((z.value() - 1.0_f64).abs() < EPSILON);
 
         let grads = z.compute_gradients();
         assert!((grads.get_gradient(&x) - 0.0).abs() < EPSILON);
@@ -347,7 +347,7 @@ mod tests {
         let x = tape.create_variable(0.0);
         let z = x.tanh();
 
-        assert!((z.value() - 0.0).abs() < EPSILON);
+        assert!((z.value() - 0.0_f64).abs() < EPSILON);
 
         let grads = z.compute_gradients();
         assert!((grads.get_gradient(&x) - 1.0).abs() < EPSILON);
@@ -476,7 +476,7 @@ mod tests {
     fn test_div_assign_scalar() {
         let tape = Tape::default();
 
-        let mut x = tape.create_variable(8.0);
+        let mut x = tape.create_variable(8.0_f64);
 
         x /= 4.0;
 
@@ -490,7 +490,7 @@ mod tests {
     fn test_div_assign_var() {
         let tape = Tape::default();
 
-        let mut x = tape.create_variable(10.0);
+        let mut x = tape.create_variable(10.0_f64);
         let y = tape.create_variable(2.0);
 
         x /= y;

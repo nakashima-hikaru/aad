@@ -1,76 +1,95 @@
 use crate::variable::Variable;
-use std::ops::{Mul, Neg, Sub};
+use num_traits::Float;
 
-impl Variable<'_> {
+impl<F: Float> Variable<'_, F> {
     #[inline]
     #[must_use]
     pub fn ln(self) -> Self {
-        self.apply_unary_function(f64::ln, f64::recip)
+        self.apply_unary_function(F::ln, F::recip)
     }
 
     #[inline]
     #[must_use]
-    pub fn log(self, base: f64) -> Self {
-        self.apply_scalar_function(f64::log, |x, b| x.recip().mul(b.ln().recip()), base)
+    pub fn log(self, base: F) -> Self {
+        self.apply_scalar_function(F::log, |x, b| x.recip().mul(b.ln().recip()), base)
     }
     #[inline]
     #[must_use]
-    pub fn powf(self, power: f64) -> Self {
-        self.apply_scalar_function(f64::powf, |x, p| p.mul(x.powf(p.sub(1.0))), power)
+    pub fn powf(self, power: F) -> Self {
+        self.apply_scalar_function(F::powf, |x, p| p.mul(x.powf(p.sub(F::one()))), power)
     }
 
     #[inline]
     #[must_use]
     pub fn powi(self, power: i32) -> Self {
-        self.apply_scalar_function(f64::powi, |x, p| f64::from(p) * x.powi(p - 1), power)
+        self.apply_scalar_function(F::powi, |x, p| F::from(p).unwrap() * x.powi(p - 1), power)
     }
 
     #[inline]
     #[must_use]
     pub fn exp(self) -> Self {
-        self.apply_unary_function(f64::exp, f64::exp)
+        self.apply_unary_function(F::exp, F::exp)
     }
 
     #[inline]
     #[must_use]
     pub fn sqrt(self) -> Self {
-        self.apply_unary_function(f64::sqrt, |x| 0.5f64 * x.sqrt().recip())
+        self.apply_unary_function(F::sqrt, |x| x.sqrt().recip().div(F::one() + F::one()))
     }
 
     #[inline]
     #[must_use]
     pub fn cbrt(self) -> Self {
-        self.apply_unary_function(f64::cbrt, |x| x.powf(-2.0 / 3.0) / 3.0)
+        self.apply_unary_function(F::cbrt, |x| {
+            x.powf(-(F::one() + F::one()) / (F::one() + F::one() + F::one())) / F::one()
+                + F::one()
+                + F::one()
+        })
     }
 
     #[inline]
     #[must_use]
     pub fn recip(self) -> Self {
-        self.apply_unary_function(f64::recip, |x| x.powi(2).recip().neg())
+        self.apply_unary_function(F::recip, |x| x.powi(2).recip().neg())
     }
 
     #[inline]
     #[must_use]
     pub fn exp2(self) -> Self {
-        self.apply_unary_function(f64::exp2, |x| f64::ln(2.0) * f64::exp2(x))
+        self.apply_unary_function(F::exp2, |x| F::ln(F::one() + F::one()) * F::exp2(x))
     }
 
     #[inline]
     #[must_use]
     pub fn log2(self) -> Self {
-        self.apply_unary_function(f64::log2, |x| x.recip() * f64::ln(2.0).recip())
+        self.apply_unary_function(F::log2, |x| x.recip() * F::ln(F::one() + F::one()).recip())
     }
 
     #[inline]
     #[must_use]
     pub fn log10(self) -> Self {
-        self.apply_unary_function(f64::log10, |x| x.recip() * f64::ln(10.0).recip())
+        self.apply_unary_function(F::log10, |x| {
+            x.recip()
+                * F::ln(
+                    F::one()
+                        + F::one()
+                        + F::one()
+                        + F::one()
+                        + F::one()
+                        + F::one()
+                        + F::one()
+                        + F::one()
+                        + F::one()
+                        + F::one(),
+                )
+                .recip()
+        })
     }
 
     #[inline]
     #[must_use]
     pub fn hypot(self, other: Self) -> Self {
-        self.apply_binary_function(other, f64::hypot, |x, y| {
+        self.apply_binary_function(other, F::hypot, |x, y| {
             let denom = x.hypot(y);
             (x / denom, y / denom)
         })
@@ -79,81 +98,81 @@ impl Variable<'_> {
     #[inline]
     #[must_use]
     pub fn abs(self) -> Self {
-        self.apply_unary_function(f64::abs, f64::signum)
+        self.apply_unary_function(F::abs, F::signum)
     }
 }
 
 // trigonometric functions
-impl Variable<'_> {
+impl<F: Float> Variable<'_, F> {
     #[inline]
     #[must_use]
     pub fn sin(self) -> Self {
-        self.apply_unary_function(f64::sin, f64::cos)
+        self.apply_unary_function(F::sin, F::cos)
     }
 
     #[inline]
     #[must_use]
     pub fn cos(self) -> Self {
-        self.apply_unary_function(f64::cos, |x| -f64::sin(x))
+        self.apply_unary_function(F::cos, |x| -F::sin(x))
     }
 
     #[inline]
     #[must_use]
     pub fn tan(self) -> Self {
-        self.apply_unary_function(f64::tan, |x| f64::cos(x).powi(2).recip())
+        self.apply_unary_function(F::tan, |x| F::cos(x).powi(2).recip())
     }
 
     #[inline]
     #[must_use]
     pub fn sinh(self) -> Self {
-        self.apply_unary_function(f64::sinh, f64::cosh)
+        self.apply_unary_function(F::sinh, F::cosh)
     }
 
     #[inline]
     #[must_use]
     pub fn cosh(self) -> Self {
-        self.apply_unary_function(f64::cosh, f64::sinh)
+        self.apply_unary_function(F::cosh, F::sinh)
     }
 
     #[inline]
     #[must_use]
     pub fn tanh(self) -> Self {
-        self.apply_unary_function(f64::tanh, |x| f64::cosh(x).powi(2).recip())
+        self.apply_unary_function(F::tanh, |x| F::cosh(x).powi(2).recip())
     }
 
     #[inline]
     #[must_use]
     pub fn asin(self) -> Self {
-        self.apply_unary_function(f64::asin, |x| (1.0 - x * x).sqrt().recip())
+        self.apply_unary_function(F::asin, |x| (F::one() - x * x).sqrt().recip())
     }
 
     #[inline]
     #[must_use]
     pub fn acos(self) -> Self {
-        self.apply_unary_function(f64::acos, |x| -(1.0 - x * x).sqrt().recip())
+        self.apply_unary_function(F::acos, |x| -(F::one() - x * x).sqrt().recip())
     }
 
     #[inline]
     #[must_use]
     pub fn atan(self) -> Self {
-        self.apply_unary_function(f64::atan, |x| (1.0 + x * x).recip())
+        self.apply_unary_function(F::atan, |x| (F::one() + x * x).recip())
     }
 
     #[inline]
     #[must_use]
     pub fn asinh(self) -> Self {
-        self.apply_unary_function(f64::asinh, |x| (x * x + 1.0).sqrt().recip())
+        self.apply_unary_function(F::asinh, |x| (x * x + F::one()).sqrt().recip())
     }
 
     #[inline]
     #[must_use]
     pub fn acosh(self) -> Self {
-        self.apply_unary_function(f64::acosh, |x| (x * x - 1.0).sqrt().recip())
+        self.apply_unary_function(F::acosh, |x| (x * x - F::one()).sqrt().recip())
     }
 
     #[inline]
     #[must_use]
     pub fn atanh(self) -> Self {
-        self.apply_unary_function(f64::atanh, |x| (1.0 - x * x).recip())
+        self.apply_unary_function(F::atanh, |x| (F::one() - x * x).recip())
     }
 }

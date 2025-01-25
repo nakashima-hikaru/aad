@@ -1,2 +1,2 @@
 #[derive(Debug)]
-pub(crate) struct OperationRecord(pub [(usize, f64); 2]);
+pub(crate) struct OperationRecord<F: Sized>(pub [(usize, F); 2]);

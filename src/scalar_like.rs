@@ -1,4 +1,5 @@
 use crate::Variable;
+use num_traits::Float;
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign};
 
 macro_rules! impl_math_fn {
@@ -17,23 +18,23 @@ macro_rules! impl_math_fn {
     };
 }
 
-pub trait ScalarLike:
+pub trait ScalarLike<Scalar>:
     Add<Output = Self>
     + Sub<Output = Self>
     + Mul<Output = Self>
     + Div<Output = Self>
-    + Add<f64, Output = Self>
-    + Sub<f64, Output = Self>
-    + Mul<f64, Output = Self>
-    + Div<f64, Output = Self>
+    + Add<Scalar, Output = Self>
+    + Sub<Scalar, Output = Self>
+    + Mul<Scalar, Output = Self>
+    + Div<Scalar, Output = Self>
     + AddAssign<Self>
     + SubAssign<Self>
     + MulAssign<Self>
     + DivAssign<Self>
-    + AddAssign<f64>
-    + SubAssign<f64>
-    + MulAssign<f64>
-    + DivAssign<f64>
+    + AddAssign<Scalar>
+    + SubAssign<Scalar>
+    + MulAssign<Scalar>
+    + DivAssign<Scalar>
     + Sized
     + Clone
     + Copy
@@ -54,7 +55,7 @@ pub trait ScalarLike:
     #[must_use]
     fn ln(self) -> Self;
     #[must_use]
-    fn log(self, base: f64) -> Self;
+    fn log(self, base: Scalar) -> Self;
     #[must_use]
     fn log2(self) -> Self;
     #[must_use]
@@ -64,7 +65,7 @@ pub trait ScalarLike:
     #[must_use]
     fn exp2(self) -> Self;
     #[must_use]
-    fn powf(self, exponent: f64) -> Self;
+    fn powf(self, exponent: Scalar) -> Self;
     #[must_use]
     fn powi(self, exponent: i32) -> Self;
 
@@ -94,9 +95,11 @@ pub trait ScalarLike:
     fn hypot(self, other: Self) -> Self;
 }
 
-macro_rules! impl_scalar_like {
-    ($type:ty) => {
-        impl ScalarLike for $type {
+macro_rules! impl_scalar_like_inner {
+    ($primitive:ty, $target:ty; $($where_clause:tt)*) => {
+        impl ScalarLike<$primitive> for $target
+        $($where_clause)*
+        {
             impl_math_fn!(sin);
             impl_math_fn!(cos);
             impl_math_fn!(tan);
@@ -104,13 +107,13 @@ macro_rules! impl_scalar_like {
             impl_math_fn!(cosh);
             impl_math_fn!(tanh);
             impl_math_fn!(ln);
-            impl_math_fn!(log, f64);
+            impl_math_fn!(log, $primitive);
             impl_math_fn!(log2);
             impl_math_fn!(log10);
             impl_math_fn!(exp);
             impl_math_fn!(exp2);
             impl_math_fn!(powi, i32);
-            impl_math_fn!(powf, f64);
+            impl_math_fn!(powf, $primitive);
             impl_math_fn!(sqrt);
             impl_math_fn!(cbrt);
             impl_math_fn!(recip);
@@ -126,5 +129,16 @@ macro_rules! impl_scalar_like {
     };
 }
 
+macro_rules! impl_scalar_like {
+    ($primitive:ty) => {
+        impl_scalar_like_inner!($primitive, $primitive; );
+        impl_scalar_like_inner!(
+            $primitive,
+            Variable<'_, $primitive>;
+            where $primitive: Float
+        );
+    };
+}
+
+impl_scalar_like!(f32);
 impl_scalar_like!(f64);
-impl_scalar_like!(Variable<'_>);

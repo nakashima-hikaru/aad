@@ -1,13 +1,14 @@
 use crate::operation_record::OperationRecord;
 use crate::variable::Variable;
+use num_traits::Zero;
 use std::cell::RefCell;
 
 #[derive(Debug, Default)]
-pub struct Tape {
-    pub(crate) operations: RefCell<Vec<OperationRecord>>,
+pub struct Tape<F: Sized> {
+    pub(crate) operations: RefCell<Vec<OperationRecord<F>>>,
 }
 
-impl Tape {
+impl<F> Tape<F> {
     #[inline]
     #[must_use]
     pub const fn new() -> Self {
@@ -23,14 +24,16 @@ impl Tape {
             operations: RefCell::new(Vec::with_capacity(capacity)),
         }
     }
+}
 
+impl<F: Copy + Zero> Tape<F> {
     #[inline]
-    pub fn create_variable(&self, value: f64) -> Variable {
+    pub fn create_variable(&self, value: F) -> Variable<F> {
         Variable {
             index: {
                 let mut operations = self.operations.borrow_mut();
                 let count = (*operations).len();
-                (*operations).push(OperationRecord([(0, 0.0), (0, 0.0)]));
+                (*operations).push(OperationRecord([(0, F::zero()), (0, F::zero())]));
                 count
             },
             tape: self,
@@ -39,12 +42,12 @@ impl Tape {
     }
 
     #[inline]
-    pub fn create_variables_as_array<const N: usize>(&self, values: &[f64; N]) -> [Variable; N] {
+    pub fn create_variables_as_array<const N: usize>(&self, values: &[F; N]) -> [Variable<F>; N] {
         std::array::from_fn(|i| self.create_variable(values[i]))
     }
 
     #[inline]
-    pub fn create_variables(&self, values: &[f64]) -> Vec<Variable> {
+    pub fn create_variables(&self, values: &[F]) -> Vec<Variable<F>> {
         values
             .iter()
             .map(|value| self.create_variable(*value))
