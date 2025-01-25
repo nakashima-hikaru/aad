@@ -94,58 +94,37 @@ pub trait ScalarLike:
     fn hypot(self, other: Self) -> Self;
 }
 
-impl ScalarLike for f64 {
-    impl_math_fn!(sin);
-    impl_math_fn!(cos);
-    impl_math_fn!(tan);
-    impl_math_fn!(sinh);
-    impl_math_fn!(cosh);
-    impl_math_fn!(tanh);
-    impl_math_fn!(ln);
-    impl_math_fn!(log, f64);
-    impl_math_fn!(log2);
-    impl_math_fn!(log10);
-    impl_math_fn!(exp);
-    impl_math_fn!(exp2);
-    impl_math_fn!(powi, i32);
-    impl_math_fn!(powf, f64);
-    impl_math_fn!(sqrt);
-    impl_math_fn!(cbrt);
-    impl_math_fn!(recip);
-    impl_math_fn!(abs);
-    impl_math_fn!(asin);
-    impl_math_fn!(acos);
-    impl_math_fn!(atan);
-    impl_math_fn!(asinh);
-    impl_math_fn!(acosh);
-    impl_math_fn!(atanh);
-    impl_math_fn!(hypot, Self);
+macro_rules! impl_scalar_like {
+    ($type:ty) => {
+        impl ScalarLike for $type {
+            impl_math_fn!(sin);
+            impl_math_fn!(cos);
+            impl_math_fn!(tan);
+            impl_math_fn!(sinh);
+            impl_math_fn!(cosh);
+            impl_math_fn!(tanh);
+            impl_math_fn!(ln);
+            impl_math_fn!(log, f64);
+            impl_math_fn!(log2);
+            impl_math_fn!(log10);
+            impl_math_fn!(exp);
+            impl_math_fn!(exp2);
+            impl_math_fn!(powi, i32);
+            impl_math_fn!(powf, f64);
+            impl_math_fn!(sqrt);
+            impl_math_fn!(cbrt);
+            impl_math_fn!(recip);
+            impl_math_fn!(abs);
+            impl_math_fn!(asin);
+            impl_math_fn!(acos);
+            impl_math_fn!(atan);
+            impl_math_fn!(asinh);
+            impl_math_fn!(acosh);
+            impl_math_fn!(atanh);
+            impl_math_fn!(hypot, Self);
+        }
+    };
 }
 
-impl ScalarLike for Variable<'_> {
-    impl_math_fn!(sin);
-    impl_math_fn!(cos);
-    impl_math_fn!(tan);
-    impl_math_fn!(sinh);
-    impl_math_fn!(cosh);
-    impl_math_fn!(tanh);
-    impl_math_fn!(ln);
-    impl_math_fn!(log, f64);
-    impl_math_fn!(log2);
-    impl_math_fn!(log10);
-    impl_math_fn!(exp);
-    impl_math_fn!(exp2);
-    impl_math_fn!(powi, i32);
-    impl_math_fn!(powf, f64);
-    impl_math_fn!(sqrt);
-    impl_math_fn!(cbrt);
-    impl_math_fn!(recip);
-    impl_math_fn!(abs);
-    impl_math_fn!(asin);
-    impl_math_fn!(acos);
-    impl_math_fn!(atan);
-    impl_math_fn!(asinh);
-    impl_math_fn!(acosh);
-    impl_math_fn!(atanh);
-    impl_math_fn!(hypot, Self);
-}
+impl_scalar_like!(f64);
+impl_scalar_like!(Variable<'_>);
