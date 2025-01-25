@@ -507,3 +507,31 @@ mod tests {
         assert!((grads.get_gradient(&y) - expected_dy).abs() < EPSILON);
     }
 }
+
+#[test]
+fn main() {
+    // Create type-agnostic mathematical functions that work with both Variable and `Float` type:
+    fn f<T, S: ScalarLike<T>>(x: S, y: S) -> S {
+        (x + y) * x.sin()
+    }
+
+    // Initialize a computation tape
+    let tape = Tape::default();
+
+    // Create variables
+    let x = tape.create_variable(2.0_f64);
+    let y = tape.create_variable(3.0_f64);
+
+    let z = f(x, y);
+
+    // Forward pass: compute value
+    println!("z = {:.2}", z.value()); // Output: z = 4.55
+
+    // Reverse pass: compute gradients
+    let grads = z.compute_gradients();
+    println!(
+        "Gradients: dx = {:.2}, dy = {:.2}",
+        grads.get_gradient(&x),
+        grads.get_gradient(&y)
+    ); // Output: dx = -1.17, dy = 0.91
+}
