@@ -1,4 +1,5 @@
 use crate::variable::Variable;
+use std::ops::{Mul, Neg, Sub};
 
 //
 impl Variable<'_> {
@@ -9,16 +10,16 @@ impl Variable<'_> {
 
     #[inline]
     pub fn log(self, base: f64) -> Self {
-        self.apply_scalar_function(|x, b| x.log(b), |x, b| x.recip() / b.ln(), base)
+        self.apply_scalar_function(f64::log, |x, b| x.recip().mul(b.ln().recip()), base)
     }
     #[inline]
     pub fn powf(self, power: f64) -> Self {
-        self.apply_scalar_function(f64::powf, |x, p| p * x.powf(p - 1.0), power)
+        self.apply_scalar_function(f64::powf, |x, p| p.mul(x.powf(p.sub(1.0))), power)
     }
 
     #[inline]
     pub fn powi(self, power: i32) -> Self {
-        self.apply_scalar_function::<i32>(f64::powi, |x, p| f64::from(p) * x.powi(p - 1), power)
+        self.apply_scalar_function(f64::powi, |x, p| f64::from(p) * x.powi(p - 1), power)
     }
 
     #[inline]
@@ -33,12 +34,12 @@ impl Variable<'_> {
 
     #[inline]
     pub fn cbrt(self) -> Self {
-        self.apply_unary_function(f64::cbrt, |x| (1.0 / 3.0) * x.powf(-2.0 / 3.0))
+        self.apply_unary_function(f64::cbrt, |x| x.powf(-2.0 / 3.0) / 3.0)
     }
 
     #[inline]
     pub fn recip(self) -> Self {
-        self.apply_unary_function(f64::recip, |x| -(x * x).recip())
+        self.apply_unary_function(f64::recip, |x| x.powi(2).recip().neg())
     }
 
     #[inline]
@@ -58,8 +59,8 @@ impl Variable<'_> {
 
     #[inline]
     pub fn hypot(self, other: Self) -> Self {
-        self.apply_binary_function(&other, f64::hypot, |x, y| {
-            let denom = (x * x + y * y).sqrt();
+        self.apply_binary_function(other, f64::hypot, |x, y| {
+            let denom = x.hypot(y);
             (x / denom, y / denom)
         })
     }

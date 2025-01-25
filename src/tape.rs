@@ -37,4 +37,43 @@ impl Tape {
             value,
         }
     }
+
+    #[inline]
+    pub fn create_variables_as_array<const N: usize>(&self, values: &[f64; N]) -> [Variable; N] {
+        std::array::from_fn(|i| self.create_variable(values[i]))
+    }
+
+    #[inline]
+    pub fn create_variables(&self, values: &[f64]) -> Vec<Variable> {
+        values
+            .iter()
+            .map(|value| self.create_variable(*value))
+            .collect()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::tape::Tape;
+
+    #[test]
+    fn test_create_variables_as_array() {
+        let tape = Tape::new();
+        const N: usize = 3;
+        const VALUES: [f64; N] = [1.0, 2.0, 3.0];
+
+        let variables = tape.create_variables_as_array(&VALUES);
+
+        assert_eq!(variables.len(), N);
+
+        for (i, variable) in variables.iter().enumerate() {
+            assert_eq!(variable.value, VALUES[i]);
+
+            assert!(std::ptr::eq(variable.tape, &tape));
+        }
+
+        let indices: Vec<_> = variables.iter().map(|var| var.index).collect();
+        let unique_indices: std::collections::HashSet<_> = indices.iter().cloned().collect();
+        assert_eq!(indices.len(), unique_indices.len());
+    }
 }

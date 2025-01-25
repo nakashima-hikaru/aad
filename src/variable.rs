@@ -40,7 +40,7 @@ impl Variable<'_> {
     }
 
     #[inline]
-    pub fn apply_unary_function(&self, f: UnaryFn<f64>, df: UnaryFn<f64>) -> Self {
+    pub fn apply_unary_function(self, f: UnaryFn<f64>, df: UnaryFn<f64>) -> Self {
         Variable {
             index: {
                 let operations = &mut self.tape.operations.borrow_mut();
@@ -55,7 +55,7 @@ impl Variable<'_> {
 
     #[inline]
     pub fn apply_scalar_function<T: Copy>(
-        &self,
+        self,
         f: BinaryFn<f64, T>,
         df: BinaryFn<f64, T>,
         scalar: T,
@@ -77,8 +77,8 @@ impl Variable<'_> {
 
     #[inline]
     pub fn apply_binary_function(
-        &self,
-        other: &Self,
+        self,
+        other: Self,
         f: BinaryFn<f64>,
         dfdx: BinaryPairFn<f64>,
     ) -> Self {

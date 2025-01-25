@@ -81,7 +81,7 @@ impl Div<Self> for Variable<'_> {
 
     #[inline]
     fn div(self, rhs: Self) -> Self::Output {
-        self.apply_binary_function(&rhs, |x, y| x / y, |x, y| (y.recip(), -x / (y * y)))
+        self.apply_binary_function(rhs, |x, y| x / y, |x, y| (y.recip(), -x / (y * y)))
     }
 }
 
