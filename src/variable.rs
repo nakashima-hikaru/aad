@@ -42,6 +42,7 @@ impl Variable<'_> {
     }
 
     #[inline]
+    #[must_use]
     pub fn apply_unary_function(self, f: UnaryFn<f64>, df: UnaryFn<f64>) -> Self {
         Variable {
             index: {
@@ -56,6 +57,7 @@ impl Variable<'_> {
     }
 
     #[inline]
+    #[must_use]
     pub fn apply_scalar_function<T: Copy>(
         self,
         f: BinaryFn<f64, T>,
@@ -78,6 +80,7 @@ impl Variable<'_> {
     }
 
     #[inline]
+    #[must_use]
     pub fn apply_binary_function(
         self,
         other: Self,

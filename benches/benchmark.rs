@@ -15,7 +15,7 @@ fn large_computation_graph_benchmark(c: &mut Criterion) {
             let x4 = tape.create_variable(5.0);
 
             let mut result = x0;
-            for i in 0..100000 {
+            for i in 0..100_000 {
                 result += (((result + x1) * x2.sin()) + (x3 * x4.ln())) * (x2 + f64::from(i).ln());
             }
             black_box(result);
