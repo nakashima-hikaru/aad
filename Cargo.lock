@@ -24,7 +24,7 @@ dependencies = [
 
 [[package]]
 name = "aad"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "RustQuant_autodiff",
  "criterion",
