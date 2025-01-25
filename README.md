@@ -12,7 +12,9 @@ A pure Rust automatic differentiation library using reverse-mode adjoint differe
   `num_traits::Float`.
 - **Reverse-mode autodiff**: Efficiently compute gradients for scalar-valued functions with many inputs.
 - **Operator overloading**: Use standard mathematical operators with variables.
-- **Benchmark-ready**: Optional benchmarking support using Criterion.rs.
+- **High Performance**: Optimized for minimal runtime overhead.
+    - Benchmarks show competitive performance, often outperforming alternatives in gradient computation (
+      see [Benchmarks](#benchmarks)).
 - **Type-agnostic functions**: Write generic mathematical code using the `ScalarLike` trait.
 
 ## Installation
