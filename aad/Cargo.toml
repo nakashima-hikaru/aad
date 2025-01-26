@@ -10,7 +10,7 @@ license-file = "LICENSE"
 resolver = "2"
 
 [features]
-default = ["aad_derive"]
+default = []
 derive = ["aad_derive"]
 benchmarks = ["criterion", "RustQuant_autodiff"]
 
