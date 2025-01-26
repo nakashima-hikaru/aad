@@ -1,5 +1,14 @@
 use crate::variable::Variable;
-use num_traits::Float;
+use num_traits::{Float, Inv, Zero};
+use std::ops::{Mul, Neg};
+
+impl<F: Copy + Inv<Output = F> + Zero + Mul<F, Output = F> + Neg<Output = F>> Variable<'_, F> {
+    #[inline]
+    #[must_use]
+    pub fn inv(self) -> Self {
+        self.apply_unary_function(F::inv, |x| x.mul(x).inv().neg())
+    }
+}
 
 impl<F: Float> Variable<'_, F> {
     #[inline]
@@ -41,9 +50,8 @@ impl<F: Float> Variable<'_, F> {
     #[must_use]
     pub fn cbrt(self) -> Self {
         self.apply_unary_function(F::cbrt, |x| {
-            x.powf(-(F::one() + F::one()) / (F::one() + F::one() + F::one())) / F::one()
-                + F::one()
-                + F::one()
+            x.powf(-(F::one() + F::one()) / (F::one() + F::one() + F::one()))
+                / (F::one() + F::one() + F::one())
         })
     }
 

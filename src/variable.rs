@@ -1,7 +1,7 @@
 use crate::gradients::Gradients;
 use crate::operation_record::OperationRecord;
 use crate::tape::Tape;
-use num_traits::{Float, Zero};
+use num_traits::{One, Zero};
 
 #[derive(Clone, Copy, Debug)]
 pub struct Variable<'a, F> {
@@ -80,7 +80,7 @@ impl<F: Copy + Zero> Variable<'_, F> {
     }
 }
 
-impl<F: Float + std::ops::AddAssign> Variable<'_, F> {
+impl<F: Copy + One + Zero> Variable<'_, F> {
     #[inline]
     #[must_use]
     pub fn compute_gradients(&self) -> Gradients<F> {
@@ -95,7 +95,7 @@ impl<F: Float + std::ops::AddAssign> Variable<'_, F> {
                 continue;
             }
             for j in 0..2 {
-                grads[operation.0[j].0] += operation.0[j].1 * grad;
+                grads[operation.0[j].0] = grads[operation.0[j].0] + operation.0[j].1 * grad;
             }
         }
 

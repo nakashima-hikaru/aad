@@ -1,6 +1,6 @@
 use crate::operation_record::OperationRecord;
 use crate::variable::Variable;
-use num_traits::{Float, One, Zero};
+use num_traits::{Float, Inv, One, Zero};
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 
 impl<F: Neg<Output = F> + One + Zero> Neg for Variable<'_, F> {
@@ -86,12 +86,14 @@ impl<F: Mul<F, Output = F> + Copy> Mul<Self> for Variable<'_, F> {
     }
 }
 
-impl<F: Copy + Div<F, Output = F> + Float> Div<Self> for Variable<'_, F> {
+impl<F: Copy + Div<F, Output = F> + Inv<Output = F> + Neg<Output = F> + Mul<Output = F>> Div<Self>
+    for Variable<'_, F>
+{
     type Output = Self;
 
     #[inline]
     fn div(self, rhs: Self) -> Self::Output {
-        self.apply_binary_function(rhs, |x, y| x / y, |x, y| (y.recip(), -x / (y * y)))
+        self.apply_binary_function(rhs, |x, y| x / y, |x, y| (y.inv(), -x / (y * y)))
     }
 }
 
@@ -116,7 +118,9 @@ impl<F: Copy + Mul<F, Output = F>> MulAssign<Self> for Variable<'_, F> {
     }
 }
 
-impl<F: Copy + Div<Self, Output = Self> + Float> DivAssign<Self> for Variable<'_, F> {
+impl<F: Copy + Div<Self, Output = Self> + Float + Inv<Output = F>> DivAssign<Self>
+    for Variable<'_, F>
+{
     #[inline]
     fn div_assign(&mut self, rhs: Self) {
         *self = *self / rhs;

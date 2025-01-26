@@ -1,6 +1,6 @@
 use crate::operation_record::OperationRecord;
 use crate::Variable;
-use num_traits::{Float, NumCast, One, Zero};
+use num_traits::{Inv, NumCast, One, Zero};
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 
 macro_rules! impl_scalar_operations {
@@ -115,12 +115,22 @@ macro_rules! impl_scalar_operations {
         }
 
         #[allow(clippy::suspicious_arithmetic_impl)]
-        impl<'a, F: Copy + Mul<$scalar, Output = F> + Float> Div<Variable<'a, F>> for $scalar {
+        impl<
+                'a,
+                F: Copy
+                    + Inv<Output = F>
+                    + Zero
+                    + Mul<F, Output = F>
+                    + Neg<Output = F>
+                    + Mul<$scalar, Output = F>
+                    + NumCast,
+            > Div<Variable<'a, F>> for $scalar
+        {
             type Output = Variable<'a, F>;
 
             #[inline]
             fn div(self, rhs: Self::Output) -> Self::Output {
-                rhs.recip() * self
+                rhs.inv() * self
             }
         }
 

@@ -1,3 +1,3 @@
 mod math;
-mod operator;
+mod arith;
 mod scalar;

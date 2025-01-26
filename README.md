@@ -26,27 +26,20 @@ Add to your `Cargo.toml`:
 aad = "0.5.0"
 ```
 
-For benchmarks:
-
-```toml
-[features]
-benchmarks = ["aad/benchmarks"]
-```
-
 ## Usage
 
 ### Basic Example
 
 ```rust
-use aad::{Tape, ScalarLike};
+use aad::Tape;
 
 fn main() {
     // Initialize computation tape
     let tape = Tape::default();
 
     // Create variables
-    let x = tape.create_variable(2.0);
-    let y = tape.create_variable(3.0);
+    let x = tape.create_variable(2.0_f64);
+    let y = tape.create_variable(3.0_f64);
 
     // Build computation graph
     let z = (x + y) * x.sin();
