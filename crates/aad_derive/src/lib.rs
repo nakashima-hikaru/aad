@@ -9,6 +9,15 @@ struct ReplaceBaseTypeFolder {
 }
 
 impl Fold for ReplaceBaseTypeFolder {
+    fn fold_expr(&mut self, expr: syn::Expr) -> syn::Expr {
+        if let syn::Expr::Lit(expr_lit) = &expr {
+            if let syn::Lit::Float(float_lit) = &expr_lit.lit {
+                return syn::parse_quote! { #float_lit };
+            }
+        }
+        syn::fold::fold_expr(self, expr)
+    }
+
     fn fold_type(&mut self, ty: syn::Type) -> syn::Type {
         if let syn::Type::Path(type_path) = &ty {
             if let Some(seg) = type_path.path.segments.last() {
@@ -18,15 +27,6 @@ impl Fold for ReplaceBaseTypeFolder {
             }
         }
         syn::fold::fold_type(self, ty)
-    }
-
-    fn fold_expr(&mut self, expr: syn::Expr) -> syn::Expr {
-        if let syn::Expr::Lit(expr_lit) = &expr {
-            if let syn::Lit::Float(float_lit) = &expr_lit.lit {
-                return syn::parse_quote! { #float_lit };
-            }
-        }
-        syn::fold::fold_expr(self, expr)
     }
 }
 
