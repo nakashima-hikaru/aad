@@ -82,6 +82,8 @@ Run benchmarks with:
 cargo bench --features benchmarks
 ```
 
+[Detailed results](https://nakashima-hikaru.github.io/aad/reports/)
+
 ## License
 
 MIT License - see [LICENSE](LICENSE) file
