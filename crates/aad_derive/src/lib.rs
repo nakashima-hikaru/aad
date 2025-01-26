@@ -1,6 +1,34 @@
 use proc_macro::TokenStream;
 use quote::quote;
+use syn::fold::Fold;
 use syn::{parse_macro_input, parse_quote, spanned::Spanned, Ident, ItemFn};
+
+struct ReplaceBaseTypeFolder {
+    base_type: String,
+    s_ident: Ident,
+}
+
+impl Fold for ReplaceBaseTypeFolder {
+    fn fold_type(&mut self, ty: syn::Type) -> syn::Type {
+        if let syn::Type::Path(type_path) = &ty {
+            if let Some(seg) = type_path.path.segments.last() {
+                if seg.ident == self.base_type {
+                    return syn::parse_str::<syn::Type>(&self.s_ident.to_string()).unwrap();
+                }
+            }
+        }
+        syn::fold::fold_type(self, ty)
+    }
+
+    fn fold_expr(&mut self, expr: syn::Expr) -> syn::Expr {
+        if let syn::Expr::Lit(expr_lit) = &expr {
+            if let syn::Lit::Float(float_lit) = &expr_lit.lit {
+                return syn::parse_quote! { #float_lit };
+            }
+        }
+        syn::fold::fold_expr(self, expr)
+    }
+}
 
 #[proc_macro_attribute]
 pub fn autodiff(_attr: TokenStream, item: TokenStream) -> TokenStream {
@@ -52,6 +80,7 @@ pub fn autodiff(_attr: TokenStream, item: TokenStream) -> TokenStream {
     }
 
     let t_ident = Ident::new(&return_base, return_span);
+    let s_ident = Ident::new("S", return_span);
 
     // Transform function signature
     let mut generics = sig.generics.clone();
@@ -83,9 +112,16 @@ pub fn autodiff(_attr: TokenStream, item: TokenStream) -> TokenStream {
         ..sig.clone()
     };
 
+    // Transform the function block
+    let mut folder = ReplaceBaseTypeFolder {
+        base_type: return_base.clone(),
+        s_ident: s_ident.clone(),
+    };
+    let transformed_block = folder.fold_block(*block.clone());
+
     let expanded = quote! {
         #vis #new_sig #where_clause {
-            #block
+            #transformed_block
         }
     };
 
