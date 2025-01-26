@@ -32,7 +32,9 @@ macro_rules! impl_scalar_add {
             }
         }
 
-        impl<F: Copy + Add<$scalar, Output = F> + One + Zero> AddAssign<$scalar> for Variable<'_, F> {
+        impl<F: Copy + Add<$scalar, Output = F> + One + Zero> AddAssign<$scalar>
+            for Variable<'_, F>
+        {
             #[inline]
             fn add_assign(&mut self, rhs: $scalar) {
                 *self = *self + rhs;
@@ -61,7 +63,9 @@ macro_rules! impl_scalar_sub {
             }
         }
 
-        impl<'a, F: Neg<Output = F> + One + Zero + Sub<$scalar, Output = F>> Sub<Variable<'a, F>> for $scalar {
+        impl<'a, F: Neg<Output = F> + One + Zero + Sub<$scalar, Output = F>> Sub<Variable<'a, F>>
+            for $scalar
+        {
             type Output = Variable<'a, F>;
 
             #[inline]
@@ -70,7 +74,9 @@ macro_rules! impl_scalar_sub {
             }
         }
 
-        impl<F: Copy + Sub<$scalar, Output = F> + One + Zero> SubAssign<$scalar> for Variable<'_, F> {
+        impl<F: Copy + Sub<$scalar, Output = F> + One + Zero> SubAssign<$scalar>
+            for Variable<'_, F>
+        {
             #[inline]
             fn sub_assign(&mut self, rhs: $scalar) {
                 *self = *self - rhs;
@@ -102,16 +108,20 @@ macro_rules! impl_scalar_mul {
             }
         }
 
-        impl<'a, F: Copy + Mul<$scalar, Output = F> + Zero + NumCast> Mul<Variable<'a, F>> for $scalar {
+        impl<'a, F: Copy + Mul<$scalar, Output = F> + Zero + NumCast> Mul<Variable<'a, F>>
+            for $scalar
+        {
             type Output = Variable<'a, F>;
-        
+
             #[inline]
             fn mul(self, rhs: Self::Output) -> Self::Output {
                 rhs * self
             }
         }
 
-        impl<F: Copy + Mul<$scalar, Output = F> + Zero + NumCast> MulAssign<$scalar> for Variable<'_, F> {
+        impl<F: Copy + Mul<$scalar, Output = F> + Zero + NumCast> MulAssign<$scalar>
+            for Variable<'_, F>
+        {
             #[inline]
             fn mul_assign(&mut self, rhs: $scalar) {
                 *self = *self * rhs;
@@ -163,7 +173,9 @@ macro_rules! impl_scalar_div {
             }
         }
 
-        impl<F: Copy + Div<$scalar, Output = F> + Zero + NumCast> DivAssign<$scalar> for Variable<'_, F> {
+        impl<F: Copy + Div<$scalar, Output = F> + Zero + NumCast> DivAssign<$scalar>
+            for Variable<'_, F>
+        {
             #[inline]
             fn div_assign(&mut self, rhs: $scalar) {
                 *self = *self / rhs;

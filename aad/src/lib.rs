@@ -643,7 +643,7 @@ mod tests {
 
     #[cfg(feature = "derive")]
     #[test]
-    fn test_enable_aad_macro() {
+    fn test_enable_aad_macro_f64() {
         #[autodiff]
         fn f(x: f64, y: f64) -> f64 {
             5.0 + 2.0 * x + y / 3.0
@@ -655,6 +655,23 @@ mod tests {
         let y = tape.create_variable(3.0_f64);
         let z = f(x, y).value();
         let w = f(2.0_f64, 3.0_f64);
+        assert_eq!(z, w);
+    }
+
+    #[cfg(feature = "derive")]
+    #[test]
+    fn test_enable_aad_macro_f32() {
+        #[autodiff]
+        fn f(x: f32, y: f32) -> f32 {
+            5.0 + 2.0 * x + y / 3.0
+        }
+
+        // Works with f32, f64, Variable<f32> and Variable<f64>:
+        let tape = Tape::default();
+        let x = tape.create_variable(2.0_f32);
+        let y = tape.create_variable(3.0_f32);
+        let z = f(x, y).value();
+        let w = f(2.0_f32, 3.0_f32);
         assert_eq!(z, w);
     }
 }
