@@ -15,7 +15,9 @@ A pure Rust automatic differentiation library using reverse-mode adjoint differe
 - **High Performance**: Optimized for minimal runtime overhead.
     - Benchmarks show competitive performance, often outperforming alternatives in gradient computation (
       see [Benchmarks](#benchmarks)).
-- **Type-agnostic functions**: Write generic mathematical code using the `ScalarLike` trait.
+- **Type-agnostic functions**: Write generic mathematical code using the `FloatLike` trait.
+- **Derive macros**: Automatically generate differentiable functions with `#[autodiff]` macro (requires `derive`
+  feature).
 
 ## Installation
 
@@ -23,7 +25,7 @@ Add to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-aad = "0.5.0"
+aad = { version = "0.5.0", features = ["derive"] }
 ```
 
 ## Usage
@@ -38,8 +40,7 @@ fn main() {
     let tape = Tape::default();
 
     // Create variables
-    let x = tape.create_variable(2.0_f64);
-    let y = tape.create_variable(3.0_f64);
+    let [x, y] = tape.create_variables_as_array(&[2.0_f64, 3.0_f64]);
 
     // Build computation graph
     let z = (x + y) * x.sin();
@@ -50,27 +51,36 @@ fn main() {
     // Reverse pass
     let gradients = z.compute_gradients();
     println!("Gradients: dx = {:.2}, dy = {:.2}",
-             gradients.get_gradient(&x),
-             gradients.get_gradient(&y));
+             gradients.get_gradients(&[x, y]));
     // Gradients: dx = -1.17, dy = 0.91
 }
 ```
 
-### Generic Mathematical Functions
+### Using Macros for Automatic Differentiation
+
+Enable the `derive` feature and use `#[autodiff]` to automatically differentiate functions:
 
 ```rust
-use aad::{ScalarLike, Tape};
+use aad::{Tape, autodiff};
 
-fn f<T, S: ScalarLike<T>>(x: S, y: S) -> S {
-    (x + y) * x.sin()
+#[autodiff]
+fn f(x: f64, y: f64) -> f64 {
+    5.0 + 2.0 * x + y / 3.0
 }
 
 fn main() {
-    // Works with f32, f64, Variable<f32> and Variable<f64>:
     let tape = Tape::default();
-    let x = tape.create_variable(2.0_f32);
-    let y = tape.create_variable(3.0_f32);
+    let x = tape.create_variable(2.0_f64);
+    let y = tape.create_variable(3.0_f64);
+
+    // Compute value and gradients
     let z = f(x, y);
+    let gradients = z.compute_gradients();
+
+    println!("Result: {:.2}", z.value());    // 5.0 + 4.0 + 1.0 = 10.00
+    println!("Gradients: dx = {:.2}, dy = {:.2}",
+             gradients.get_gradients(&[x, y]));
+    // Gradients: dx = 2.00, dy = 0.33
 }
 ```
 
@@ -86,4 +96,4 @@ cargo bench --features benchmarks
 
 ## License
 
-MIT License - see [LICENSE](LICENSE) file
+MIT License - see [LICENSE](LICENSE)

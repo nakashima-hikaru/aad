@@ -29,6 +29,9 @@ dependencies = [
  "RustQuant_autodiff",
  "criterion",
  "num-traits",
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]

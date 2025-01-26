@@ -5,13 +5,15 @@ pub mod scalar_like;
 pub mod tape;
 pub mod variable;
 
-pub use scalar_like::ScalarLike;
+pub use scalar_like::FloatLike;
 pub use tape::Tape;
 pub use variable::Variable;
 
 #[cfg(test)]
 mod tests {
     use crate::Tape;
+    #[cfg(feature = "derive")]
+    use aad_derive::autodiff;
 
     #[test]
     fn test_add() {
@@ -506,32 +508,153 @@ mod tests {
         assert!((grads.get_gradient(&x) - expected_dx).abs() < EPSILON);
         assert!((grads.get_gradient(&y) - expected_dy).abs() < EPSILON);
     }
-}
 
-#[test]
-fn main() {
-    // Create type-agnostic mathematical functions that work with both Variable and `Float` type:
-    fn f<T, S: ScalarLike<T>>(x: S, y: S) -> S {
-        (x + y) * x.sin()
+    #[test]
+    fn test_i8() {
+        let tape = Tape::new();
+        let [x, y] = tape.create_variables_as_array(&[2_i8, 3]);
+
+        let z = 2 * x + y;
+        let grads = z.compute_gradients();
+        let res = grads.get_gradients(&[x, y]);
+        assert_eq!(res, [2, 1]);
     }
 
-    // Initialize a computation tape
-    let tape = Tape::default();
+    #[test]
+    fn test_i16() {
+        let tape = Tape::new();
+        let [x, y] = tape.create_variables_as_array(&[2_i16, 3]);
 
-    // Create variables
-    let x = tape.create_variable(2.0_f64);
-    let y = tape.create_variable(3.0_f64);
+        let z = 2 * x + y;
+        let grads = z.compute_gradients();
+        let res = grads.get_gradients(&[x, y]);
+        assert_eq!(res, [2, 1]);
+    }
 
-    let z = f(x, y);
+    #[test]
+    fn test_i32() {
+        let tape = Tape::new();
+        let [x, y] = tape.create_variables_as_array(&[2_i32, 3]);
 
-    // Forward pass: compute value
-    println!("z = {:.2}", z.value()); // Output: z = 4.55
+        let z = 2 * x + y;
+        let grads = z.compute_gradients();
+        let res = grads.get_gradients(&[x, y]);
+        assert_eq!(res, [2, 1]);
+    }
 
-    // Reverse pass: compute gradients
-    let grads = z.compute_gradients();
-    println!(
-        "Gradients: dx = {:.2}, dy = {:.2}",
-        grads.get_gradient(&x),
-        grads.get_gradient(&y)
-    ); // Output: dx = -1.17, dy = 0.91
+    #[test]
+    fn test_i64() {
+        let tape = Tape::new();
+        let [x, y] = tape.create_variables_as_array(&[2_i64, 3]);
+
+        let z = 2 * x + y;
+        let grads = z.compute_gradients();
+        let res = grads.get_gradients(&[x, y]);
+        assert_eq!(res, [2, 1]);
+    }
+
+    #[test]
+    fn test_i128() {
+        let tape = Tape::new();
+        let [x, y] = tape.create_variables_as_array(&[2_i128, 3]);
+
+        let z = 2 * x + y;
+        let grads = z.compute_gradients();
+        let res = grads.get_gradients(&[x, y]);
+        assert_eq!(res, [2, 1]);
+    }
+
+    #[test]
+    fn test_isize() {
+        let tape = Tape::new();
+        let [x, y] = tape.create_variables_as_array(&[2_isize, 3]);
+
+        let z = 2 * x + y;
+        let grads = z.compute_gradients();
+        let res = grads.get_gradients(&[x, y]);
+        assert_eq!(res, [2, 1]);
+    }
+
+    #[test]
+    fn test_u8() {
+        let tape = Tape::new();
+        let [x, y] = tape.create_variables_as_array(&[2_u8, 3]);
+
+        let z = 2 * x + y;
+        let grads = z.compute_gradients();
+        let res = grads.get_gradients(&[x, y]);
+        assert_eq!(res, [2, 1]);
+    }
+
+    #[test]
+    fn test_u16() {
+        let tape = Tape::new();
+        let [x, y] = tape.create_variables_as_array(&[2_u16, 3]);
+
+        let z = 2 * x + y;
+        let grads = z.compute_gradients();
+        let res = grads.get_gradients(&[x, y]);
+        assert_eq!(res, [2, 1]);
+    }
+
+    #[test]
+    fn test_u32() {
+        let tape = Tape::new();
+        let [x, y] = tape.create_variables_as_array(&[2_u32, 3]);
+
+        let z = 2 * x + y;
+        let grads = z.compute_gradients();
+        let res = grads.get_gradients(&[x, y]);
+        assert_eq!(res, [2, 1]);
+    }
+
+    #[test]
+    fn test_u64() {
+        let tape = Tape::new();
+        let [x, y] = tape.create_variables_as_array(&[2_u64, 3]);
+
+        let z = 2 * x + y;
+        let grads = z.compute_gradients();
+        let res = grads.get_gradients(&[x, y]);
+        assert_eq!(res, [2, 1]);
+    }
+
+    #[test]
+    fn test_u128() {
+        let tape = Tape::new();
+        let [x, y] = tape.create_variables_as_array(&[2_u128, 3]);
+
+        let z = 2 * x + y;
+        let grads = z.compute_gradients();
+        let res = grads.get_gradients(&[x, y]);
+        assert_eq!(res, [2, 1]);
+    }
+
+    #[test]
+    fn test_usize() {
+        let tape = Tape::new();
+        let [x, y] = tape.create_variables_as_array(&[2_usize, 3]);
+
+        let z = 2 * x + y;
+        let grads = z.compute_gradients();
+        let res = grads.get_gradients(&[x, y]);
+        assert_eq!(res, [2, 1]);
+    }
+
+    #[cfg(feature = "derive")]
+    #[test]
+    fn test_enable_aad_macro() {
+        #[autodiff]
+        fn f(x: f64, y: f64) -> f64 {
+            5.0 + 2.0 * x + y / 3.0
+        }
+
+        // Works with f32, f64, Variable<f32> and Variable<f64>:
+        let tape = Tape::default();
+        let x = tape.create_variable(2.0_f64);
+        let y = tape.create_variable(3.0_f64);
+        let z = f(x, y).value();
+        let w = f(2.0_f64, 3.0_f64);
+        assert_eq!(z, w);
+    }
 }

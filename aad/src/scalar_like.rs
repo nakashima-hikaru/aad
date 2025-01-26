@@ -18,7 +18,7 @@ macro_rules! impl_math_fn {
     };
 }
 
-pub trait ScalarLike<Scalar>:
+pub trait FloatLike<Scalar>:
     Add<Output = Self>
     + Sub<Output = Self>
     + Mul<Output = Self>
@@ -97,7 +97,7 @@ pub trait ScalarLike<Scalar>:
 
 macro_rules! impl_scalar_like_inner {
     ($primitive:ty, $target:ty; $($where_clause:tt)*) => {
-        impl ScalarLike<$primitive> for $target
+        impl FloatLike<$primitive> for $target
         $($where_clause)*
         {
             impl_math_fn!(sin);
