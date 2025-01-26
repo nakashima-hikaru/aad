@@ -649,7 +649,6 @@ mod tests {
             5.0 + 2.0 * x + y / 3.0
         }
 
-        // Works with f32, f64, Variable<f32> and Variable<f64>:
         let tape = Tape::default();
         let x = tape.create_variable(2.0_f64);
         let y = tape.create_variable(3.0_f64);
@@ -667,7 +666,25 @@ mod tests {
             val
         }
 
-        // Works with f32, f64, Variable<f32> and Variable<f64>:
+        let tape = Tape::default();
+        let x = tape.create_variable(2.0_f64);
+        let y = tape.create_variable(3.0_f64);
+        let z = f(x, y).value();
+        let w = f(2.0_f64, 3.0_f64);
+        assert_eq!(z, w);
+    }
+
+    #[cfg(feature = "derive")]
+    #[test]
+    fn test_enable_aad_macro_f64_3() {
+        #[autodiff]
+        fn f(x: f64, y: f64) -> f64 {
+            let val: f64 = 5.0 + 2.0 * x + y / 3.0;
+            let val2 = val.abs() - val;
+            let val3: f64 = -val2.sqrt() + val;
+            val3 + val3.ln().sin()
+        }
+
         let tape = Tape::default();
         let x = tape.create_variable(2.0_f64);
         let y = tape.create_variable(3.0_f64);
@@ -684,7 +701,6 @@ mod tests {
             5.0 + 2.0 * x + y / 3.0
         }
 
-        // Works with f32, f64, Variable<f32> and Variable<f64>:
         let tape = Tape::default();
         let x = tape.create_variable(2.0_f32);
         let y = tape.create_variable(3.0_f32);

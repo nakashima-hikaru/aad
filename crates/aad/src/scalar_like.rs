@@ -1,6 +1,6 @@
 use crate::Variable;
 use num_traits::Float;
-use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign};
+use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 
 macro_rules! impl_math_fn {
     ($method:ident) => {
@@ -19,7 +19,8 @@ macro_rules! impl_math_fn {
 }
 
 pub trait FloatLike<Scalar>:
-    Add<Output = Self>
+    Neg<Output = Self>
+    + Add<Output = Self>
     + Sub<Output = Self>
     + Mul<Output = Self>
     + Div<Output = Self>
