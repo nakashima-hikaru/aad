@@ -13,6 +13,48 @@ impl<F: Copy + Inv<Output = F> + Zero + Mul<F, Output = F> + Neg<Output = F>> Va
 impl<F: Float> Variable<'_, F> {
     #[inline]
     #[must_use]
+    pub fn is_nan(self) -> bool {
+        self.value.is_nan()
+    }
+
+    #[inline]
+    #[must_use]
+    pub fn is_infinite(self) -> bool {
+        self.value.is_infinite()
+    }
+
+    #[inline]
+    #[must_use]
+    pub fn is_finite(self) -> bool {
+        self.value.is_finite()
+    }
+
+    #[inline]
+    #[must_use]
+    pub fn is_normal(self) -> bool {
+        self.value.is_normal()
+    }
+
+    #[inline]
+    #[must_use]
+    pub fn is_subnormal(self) -> bool {
+        self.value.is_subnormal()
+    }
+
+    #[inline]
+    #[must_use]
+    pub fn is_sign_positive(self) -> bool {
+        self.value.is_sign_positive()
+    }
+
+    #[inline]
+    #[must_use]
+    pub fn is_sign_negative(self) -> bool {
+        self.value.is_sign_negative()
+    }
+
+    #[inline]
+    #[must_use]
     pub fn ln(self) -> Self {
         self.apply_unary_function(F::ln, F::recip)
     }

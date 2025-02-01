@@ -5,6 +5,8 @@ pub mod scalar_like;
 pub mod tape;
 pub mod variable;
 
+#[cfg(feature = "derive")]
+pub use aad_derive::autodiff;
 pub use scalar_like::FloatLike;
 pub use tape::Tape;
 pub use variable::Variable;
@@ -12,8 +14,6 @@ pub use variable::Variable;
 #[cfg(test)]
 mod tests {
     use crate::Tape;
-    #[cfg(feature = "derive")]
-    use aad_derive::autodiff;
 
     #[test]
     fn test_add() {
@@ -639,73 +639,5 @@ mod tests {
         let grads = z.compute_gradients();
         let res = grads.get_gradients(&[x, y]);
         assert_eq!(res, [2, 1]);
-    }
-
-    #[cfg(feature = "derive")]
-    #[test]
-    fn test_enable_aad_macro_f64() {
-        #[autodiff]
-        fn f(x: f64, y: f64) -> f64 {
-            5.0 + 2.0 * x + y / 3.0
-        }
-
-        let tape = Tape::default();
-        let x = tape.create_variable(2.0_f64);
-        let y = tape.create_variable(3.0_f64);
-        let z = f(x, y).value();
-        let w = f(2.0_f64, 3.0_f64);
-        assert_eq!(z, w);
-    }
-
-    #[cfg(feature = "derive")]
-    #[test]
-    fn test_enable_aad_macro_f64_2() {
-        #[autodiff]
-        fn f(x: f64, y: f64) -> f64 {
-            let val: f64 = 5.0 + 2.0 * x + y / 3.0;
-            val
-        }
-
-        let tape = Tape::default();
-        let x = tape.create_variable(2.0_f64);
-        let y = tape.create_variable(3.0_f64);
-        let z = f(x, y).value();
-        let w = f(2.0_f64, 3.0_f64);
-        assert_eq!(z, w);
-    }
-
-    #[cfg(feature = "derive")]
-    #[test]
-    fn test_enable_aad_macro_f64_3() {
-        #[autodiff]
-        fn f(x: f64, y: f64) -> f64 {
-            let val: f64 = 5.0 + 2.0 * x + y / 3.0;
-            let val2 = val.abs() - val;
-            let val3: f64 = -val2.sqrt() + val;
-            val3 + val3.ln().sin()
-        }
-
-        let tape = Tape::default();
-        let x = tape.create_variable(2.0_f64);
-        let y = tape.create_variable(3.0_f64);
-        let z = f(x, y).value();
-        let w = f(2.0_f64, 3.0_f64);
-        assert_eq!(z, w);
-    }
-
-    #[cfg(feature = "derive")]
-    #[test]
-    fn test_enable_aad_macro_f32() {
-        #[autodiff]
-        fn f(x: f32, y: f32) -> f32 {
-            5.0 + 2.0 * x + y / 3.0
-        }
-
-        let tape = Tape::default();
-        let x = tape.create_variable(2.0_f32);
-        let y = tape.create_variable(3.0_f32);
-        let z = f(x, y).value();
-        let w = f(2.0_f32, 3.0_f32);
-        assert_eq!(z, w);
     }
 }

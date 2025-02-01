@@ -1,7 +1,8 @@
 use crate::operation_record::OperationRecord;
 use crate::variable::Variable;
-use num_traits::Zero;
+use num_traits::{One, Zero};
 use std::cell::RefCell;
+use std::ops::Add;
 
 #[derive(Debug, Default)]
 pub struct Tape<F: Sized> {
@@ -55,6 +56,17 @@ impl<F: Copy + Zero> Tape<F> {
     }
 }
 
+impl<'a, F: Copy + Zero + Add<F, Output = F> + One> Tape<F> {
+    #[inline]
+    pub fn sum(&'a self, variables: &[Variable<'a, F>]) -> Variable<'a, F> {
+        let mut ret = self.create_variable(F::zero());
+        for &variable in variables {
+            ret += variable;
+        }
+        ret
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use crate::tape::Tape;
@@ -78,5 +90,17 @@ mod tests {
         let indices: Vec<_> = variables.iter().map(|var| var.index).collect();
         let unique_indices: std::collections::HashSet<_> = indices.iter().copied().collect();
         assert_eq!(indices.len(), unique_indices.len());
+    }
+
+    #[test]
+    fn test_sum() {
+        let tape = Tape::new();
+        let values = [1.0, 2.0, 3.0];
+        let variables = tape.create_variables_as_array(&values);
+
+        let sum = tape.sum(&variables);
+
+        assert_eq!(sum.value, 6.0);
+        assert!(std::ptr::eq(sum.tape, &tape));
     }
 }

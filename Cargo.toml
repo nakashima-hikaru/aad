@@ -1,7 +1,5 @@
 [workspace]
-members = [
-    "crates/aad", "crates/aad_derive",
-]
+members = ["crates/aad", "crates/aad_derive", "crates/test-aad"]
 resolver = "2"
 
 [patch.crates-io]

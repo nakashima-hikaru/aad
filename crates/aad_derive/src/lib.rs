@@ -86,14 +86,14 @@ pub fn autodiff(_attr: TokenStream, item: TokenStream) -> TokenStream {
     let mut generics = sig.generics.clone();
     generics
         .params
-        .push(parse_quote!(S: crate::FloatLike<#t_ident>));
+        .push(parse_quote!(S: ::aad::FloatLike<#t_ident>));
 
-    let where_clause: syn::WhereClause = parse_quote! {
+    let where_clause: ::syn::WhereClause = parse_quote! {
         where
-            #t_ident: std::ops::Add<S, Output = S>,
-            #t_ident: std::ops::Sub<S, Output = S>,
-            #t_ident: std::ops::Mul<S, Output = S>,
-            #t_ident: std::ops::Div<S, Output = S>
+            #t_ident: ::std::ops::Add<S, Output = S>,
+            #t_ident: ::std::ops::Sub<S, Output = S>,
+            #t_ident: ::std::ops::Mul<S, Output = S>,
+            #t_ident: ::std::ops::Div<S, Output = S>
     };
 
     let new_args = sig.inputs.iter().map(|arg| {
