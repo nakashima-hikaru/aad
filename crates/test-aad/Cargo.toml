@@ -1,0 +1,8 @@
+[package]
+name = "test-aad"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+trybuild = "1.0.103"
+aad = { path = "../aad", features = ["derive"] }
