@@ -42,13 +42,12 @@ fn large_computation_graph_benchmark_rust_quant(c: &mut Criterion) {
 
 fn large_computation_graph_benchmark_f64(c: &mut Criterion) {
     c.bench_function("large_computation_graph_f64", |b| {
+        let x0 = 1.0_f64;
+        let x1 = 2.0_f64;
+        let x2 = 3.0_f64;
+        let x3 = 4.0_f64;
+        let x4 = 5.0_f64;
         b.iter(|| {
-            let x0 = 1.0_f64;
-            let x1 = 2.0_f64;
-            let x2 = 3.0_f64;
-            let x3 = 4.0_f64;
-            let x4 = 5.0_f64;
-
             let mut result = x0;
             for i in 0..100_000 {
                 result += (((result + x1) * x2.sin()) + (x3 * x4.ln())) * (x2 + f64::from(i).ln());
