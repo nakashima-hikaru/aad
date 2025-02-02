@@ -512,7 +512,7 @@ mod tests {
     #[test]
     fn test_i8() {
         let tape = Tape::new();
-        let [x, y] = tape.create_variables_as_array(&[2_i8, 3]);
+        let [x, y] = tape.create_variables(&[2_i8, 3]);
 
         let z = 2 * x + y;
         let grads = z.compute_gradients();
@@ -523,7 +523,7 @@ mod tests {
     #[test]
     fn test_i16() {
         let tape = Tape::new();
-        let [x, y] = tape.create_variables_as_array(&[2_i16, 3]);
+        let [x, y] = tape.create_variables(&[2_i16, 3]);
 
         let z = 2 * x + y;
         let grads = z.compute_gradients();
@@ -534,7 +534,7 @@ mod tests {
     #[test]
     fn test_i32() {
         let tape = Tape::new();
-        let [x, y] = tape.create_variables_as_array(&[2_i32, 3]);
+        let [x, y] = tape.create_variables(&[2_i32, 3]);
 
         let z = 2 * x + y;
         let grads = z.compute_gradients();
@@ -545,7 +545,7 @@ mod tests {
     #[test]
     fn test_i64() {
         let tape = Tape::new();
-        let [x, y] = tape.create_variables_as_array(&[2_i64, 3]);
+        let [x, y] = tape.create_variables(&[2_i64, 3]);
 
         let z = 2 * x + y;
         let grads = z.compute_gradients();
@@ -556,7 +556,7 @@ mod tests {
     #[test]
     fn test_i128() {
         let tape = Tape::new();
-        let [x, y] = tape.create_variables_as_array(&[2_i128, 3]);
+        let [x, y] = tape.create_variables(&[2_i128, 3]);
 
         let z = 2 * x + y;
         let grads = z.compute_gradients();
@@ -567,7 +567,7 @@ mod tests {
     #[test]
     fn test_isize() {
         let tape = Tape::new();
-        let [x, y] = tape.create_variables_as_array(&[2_isize, 3]);
+        let [x, y] = tape.create_variables(&[2_isize, 3]);
 
         let z = 2 * x + y;
         let grads = z.compute_gradients();
@@ -578,7 +578,7 @@ mod tests {
     #[test]
     fn test_u8() {
         let tape = Tape::new();
-        let [x, y] = tape.create_variables_as_array(&[2_u8, 3]);
+        let [x, y] = tape.create_variables(&[2_u8, 3]);
 
         let z = 2 * x + y;
         let grads = z.compute_gradients();
@@ -589,7 +589,7 @@ mod tests {
     #[test]
     fn test_u16() {
         let tape = Tape::new();
-        let [x, y] = tape.create_variables_as_array(&[2_u16, 3]);
+        let [x, y] = tape.create_variables(&[2_u16, 3]);
 
         let z = 2 * x + y;
         let grads = z.compute_gradients();
@@ -600,7 +600,7 @@ mod tests {
     #[test]
     fn test_u32() {
         let tape = Tape::new();
-        let [x, y] = tape.create_variables_as_array(&[2_u32, 3]);
+        let [x, y] = tape.create_variables(&[2_u32, 3]);
 
         let z = 2 * x + y;
         let grads = z.compute_gradients();
@@ -611,7 +611,7 @@ mod tests {
     #[test]
     fn test_u64() {
         let tape = Tape::new();
-        let [x, y] = tape.create_variables_as_array(&[2_u64, 3]);
+        let [x, y] = tape.create_variables(&[2_u64, 3]);
 
         let z = 2 * x + y;
         let grads = z.compute_gradients();
@@ -622,7 +622,7 @@ mod tests {
     #[test]
     fn test_u128() {
         let tape = Tape::new();
-        let [x, y] = tape.create_variables_as_array(&[2_u128, 3]);
+        let [x, y] = tape.create_variables(&[2_u128, 3]);
 
         let z = 2 * x + y;
         let grads = z.compute_gradients();
@@ -633,7 +633,7 @@ mod tests {
     #[test]
     fn test_usize() {
         let tape = Tape::new();
-        let [x, y] = tape.create_variables_as_array(&[2_usize, 3]);
+        let [x, y] = tape.create_variables(&[2_usize, 3]);
 
         let z = 2 * x + y;
         let grads = z.compute_gradients();

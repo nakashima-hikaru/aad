@@ -40,7 +40,7 @@ fn main() {
     let tape = Tape::default();
 
     // Create variables
-    let [x, y] = tape.create_variables_as_array(&[2.0_f64, 3.0_f64]);
+    let [x, y] = tape.create_variables(&[2.0_f64, 3.0_f64]);
 
     // Build computation graph
     let z = (x + y) * x.sin();
@@ -70,8 +70,7 @@ fn f(x: f64, y: f64) -> f64 {
 
 fn main() {
     let tape = Tape::default();
-    let x = tape.create_variable(2.0_f64);
-    let y = tape.create_variable(3.0_f64);
+    let [x, y] = tape.create_variables(&[2.0_f64, 3.0_f64]);
 
     // Compute value and gradients
     let z = f(x, y);

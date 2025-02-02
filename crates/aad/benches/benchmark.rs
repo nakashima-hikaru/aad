@@ -16,7 +16,7 @@ fn build_calculation_graph(x0: f64, x1: f64, x2: f64, x3: f64, x4: f64) -> f64 {
 fn large_computation_graph_benchmark_derive(c: &mut Criterion) {
     c.bench_function("large_computation_graph_derive", |b| {
         let tape = Tape::default();
-        let [x0, x1, x2, x3, x4] = tape.create_variables_as_array(&[1.0, 2.0, 3.0, 4.0, 5.0]);
+        let [x0, x1, x2, x3, x4] = tape.create_variables(&[1.0, 2.0, 3.0, 4.0, 5.0]);
         b.iter(|| {
             let result = build_calculation_graph(x0, x1, x2, x3, x4);
             black_box(result);
@@ -29,7 +29,7 @@ fn large_computation_graph_benchmark_derive(c: &mut Criterion) {
 fn large_computation_graph_benchmark(c: &mut Criterion) {
     c.bench_function("large_computation_graph", |b| {
         let tape = Tape::default();
-        let [x0, x1, x2, x3, x4] = tape.create_variables_as_array(&[1.0, 2.0, 3.0, 4.0, 5.0]);
+        let [x0, x1, x2, x3, x4] = tape.create_variables(&[1.0, 2.0, 3.0, 4.0, 5.0]);
         b.iter(|| {
             let mut result = x0;
             for i in 0..100_000 {

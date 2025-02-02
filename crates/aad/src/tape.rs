@@ -43,12 +43,12 @@ impl<F: Copy + Zero> Tape<F> {
     }
 
     #[inline]
-    pub fn create_variables_as_array<const N: usize>(&self, values: &[F; N]) -> [Variable<F>; N] {
+    pub fn create_variables<const N: usize>(&self, values: &[F; N]) -> [Variable<F>; N] {
         std::array::from_fn(|i| self.create_variable(values[i]))
     }
 
     #[inline]
-    pub fn create_variables(&self, values: &[F]) -> Vec<Variable<F>> {
+    pub fn create_variables_vec(&self, values: &[F]) -> Vec<Variable<F>> {
         values
             .iter()
             .map(|value| self.create_variable(*value))
@@ -72,12 +72,12 @@ mod tests {
     use crate::tape::Tape;
 
     #[test]
-    fn test_create_variables_as_array() {
+    fn test_create_variables() {
         let tape = Tape::new();
         const N: usize = 3;
         const VALUES: [f64; N] = [1.0, 2.0, 3.0];
 
-        let variables = tape.create_variables_as_array(&VALUES);
+        let variables = tape.create_variables(&VALUES);
 
         assert_eq!(variables.len(), N);
 
@@ -96,7 +96,7 @@ mod tests {
     fn test_sum() {
         let tape = Tape::new();
         let values = [1.0, 2.0, 3.0];
-        let variables = tape.create_variables_as_array(&values);
+        let variables = tape.create_variables(&values);
 
         let sum = tape.sum(&variables);
 
