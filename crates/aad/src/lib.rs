@@ -1,13 +1,13 @@
+pub mod float_like;
 pub mod gradients;
 pub(crate) mod operation_record;
 mod overload;
-pub mod scalar_like;
 pub mod tape;
 pub mod variable;
 
 #[cfg(feature = "derive")]
 pub use aad_derive::autodiff;
-pub use scalar_like::FloatLike;
+pub use float_like::FloatLike;
 pub use tape::Tape;
 pub use variable::Variable;
 

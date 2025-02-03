@@ -10,15 +10,23 @@ macro_rules! impl_scalar_add {
 
             #[inline]
             fn add(self, rhs: $scalar) -> Self::Output {
-                Variable {
-                    index: {
-                        let mut operations = self.tape.operations.borrow_mut();
-                        let count = operations.len();
-                        operations.push(OperationRecord([(self.index, F::one()), (0, F::zero())]));
-                        count
+                match self.tape {
+                    Some(tape) => Variable {
+                        index: {
+                            let mut operations = tape.operations.borrow_mut();
+                            let count = operations.len();
+                            operations
+                                .push(OperationRecord([(self.index, F::one()), (0, F::zero())]));
+                            count
+                        },
+                        tape: Some(tape),
+                        value: self.value + rhs,
                     },
-                    tape: self.tape,
-                    value: self.value + rhs,
+                    None => Variable {
+                        index: 0,
+                        tape: None,
+                        value: self.value + rhs,
+                    },
                 }
             }
         }
@@ -50,15 +58,23 @@ macro_rules! impl_scalar_sub {
 
             #[inline]
             fn sub(self, rhs: $scalar) -> Self::Output {
-                Variable {
-                    index: {
-                        let mut operations = self.tape.operations.borrow_mut();
-                        let count = operations.len();
-                        operations.push(OperationRecord([(self.index, F::one()), (0, F::zero())]));
-                        count
+                match self.tape {
+                    Some(tape) => Variable {
+                        index: {
+                            let mut operations = tape.operations.borrow_mut();
+                            let count = operations.len();
+                            operations
+                                .push(OperationRecord([(self.index, F::one()), (0, F::zero())]));
+                            count
+                        },
+                        tape: Some(tape),
+                        value: self.value - rhs,
                     },
-                    tape: self.tape,
-                    value: self.value - rhs,
+                    None => Variable {
+                        index: 0,
+                        tape: None,
+                        value: self.value - rhs,
+                    },
                 }
             }
         }
@@ -92,18 +108,25 @@ macro_rules! impl_scalar_mul {
 
             #[inline]
             fn mul(self, rhs: $scalar) -> Self::Output {
-                Variable {
-                    index: {
-                        let mut operations = self.tape.operations.borrow_mut();
-                        let count = operations.len();
-                        operations.push(OperationRecord([
-                            (self.index, F::from(rhs).unwrap()),
-                            (0, F::zero()),
-                        ]));
-                        count
+                match self.tape {
+                    Some(tape) => Variable {
+                        index: {
+                            let mut operations = tape.operations.borrow_mut();
+                            let count = operations.len();
+                            operations.push(OperationRecord([
+                                (self.index, F::from(rhs).unwrap()),
+                                (0, F::zero()),
+                            ]));
+                            count
+                        },
+                        tape: Some(tape),
+                        value: self.value * rhs,
                     },
-                    tape: self.tape,
-                    value: self.value * rhs,
+                    None => Variable {
+                        index: 0,
+                        tape: None,
+                        value: self.value * rhs,
+                    },
                 }
             }
         }
@@ -137,18 +160,25 @@ macro_rules! impl_scalar_div {
 
             #[inline]
             fn div(self, rhs: $scalar) -> Self::Output {
-                Variable {
-                    index: {
-                        let operations = &mut self.tape.operations.borrow_mut();
-                        let count = operations.len();
-                        operations.push(OperationRecord([
-                            (self.index, F::from(rhs.recip()).unwrap()),
-                            (0, F::zero()),
-                        ]));
-                        count
+                match self.tape {
+                    Some(tape) => Variable {
+                        index: {
+                            let operations = &mut tape.operations.borrow_mut();
+                            let count = operations.len();
+                            operations.push(OperationRecord([
+                                (self.index, F::from(rhs.recip()).unwrap()),
+                                (0, F::zero()),
+                            ]));
+                            count
+                        },
+                        tape: Some(tape),
+                        value: self.value / rhs,
                     },
-                    tape: self.tape,
-                    value: self.value / rhs,
+                    None => Variable {
+                        index: 0,
+                        tape: None,
+                        value: self.value / rhs,
+                    },
                 }
             }
         }

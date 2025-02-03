@@ -150,6 +150,12 @@ impl<F: Float> Variable<'_, F> {
     pub fn abs(self) -> Self {
         self.apply_unary_function(F::abs, F::signum)
     }
+
+    #[inline]
+    #[must_use]
+    pub fn mul_add(self, a: F, b: F) -> Self {
+        self.apply_scalar_function(|x, (a, b)| F::mul_add(x, a, b), |_, (a, _)| a, (a, b))
+    }
 }
 
 // trigonometric functions

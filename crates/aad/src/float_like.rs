@@ -1,6 +1,9 @@
 use crate::Variable;
 use num_traits::Float;
-use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
+use std::{
+    iter::Sum,
+    ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign},
+};
 
 macro_rules! impl_math_fn {
     ($method:ident) => {
@@ -36,6 +39,8 @@ pub trait FloatLike<Scalar>:
     + SubAssign<Scalar>
     + MulAssign<Scalar>
     + DivAssign<Scalar>
+    + Sum<Self>
+    + for<'a> Sum<&'a Self>
     + Sized
     + Clone
     + Copy

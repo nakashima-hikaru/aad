@@ -24,7 +24,7 @@ dependencies = [
 
 [[package]]
 name = "aad"
-version = "0.6.0"
+version = "0.7.0"
 dependencies = [
  "RustQuant_autodiff",
  "aad_derive",
@@ -34,7 +34,7 @@ dependencies = [
 
 [[package]]
 name = "aad_derive"
-version = "0.1.0"
+version = "0.7.0"
 dependencies = [
  "quote",
  "syn",

@@ -80,26 +80,32 @@ pub fn autodiff(_attr: TokenStream, item: TokenStream) -> TokenStream {
     }
 
     let t_ident = Ident::new(&return_base, return_span);
-    let s_ident = Ident::new("S", return_span);
+    let s_ident = Ident::new("FloatType", return_span);
 
     // Transform function signature
     let mut generics = sig.generics.clone();
     generics
         .params
-        .push(parse_quote!(S: ::aad::FloatLike<#t_ident>));
+        .push(parse_quote!(FloatType: ::aad::FloatLike<#t_ident>));
 
     let where_clause: ::syn::WhereClause = parse_quote! {
         where
-            #t_ident: ::std::ops::Add<S, Output = S>,
-            #t_ident: ::std::ops::Sub<S, Output = S>,
-            #t_ident: ::std::ops::Mul<S, Output = S>,
-            #t_ident: ::std::ops::Div<S, Output = S>
+            #t_ident: ::std::ops::Add<FloatType, Output = FloatType>,
+            #t_ident: ::std::ops::Sub<FloatType, Output = FloatType>,
+            #t_ident: ::std::ops::Mul<FloatType, Output = FloatType>,
+            #t_ident: ::std::ops::Div<FloatType, Output = FloatType>,
     };
 
     let new_args = sig.inputs.iter().map(|arg| {
         if let syn::FnArg::Typed(pat_type) = arg {
             let ident = &pat_type.pat;
-            quote! { #ident: S }
+            let ty = &pat_type.ty;
+            let new_ty = ReplaceBaseTypeFolder {
+                base_type: return_base.clone(),
+                s_ident: s_ident.clone(),
+            }
+            .fold_type(*ty.clone());
+            quote! { #ident: #new_ty }
         } else {
             unreachable!()
         }
@@ -107,7 +113,7 @@ pub fn autodiff(_attr: TokenStream, item: TokenStream) -> TokenStream {
 
     let new_sig = syn::Signature {
         generics,
-        output: parse_quote!(-> S),
+        output: parse_quote!(-> FloatType),
         inputs: parse_quote!(#(#new_args),*),
         ..sig.clone()
     };
@@ -129,16 +135,24 @@ pub fn autodiff(_attr: TokenStream, item: TokenStream) -> TokenStream {
 }
 
 fn get_base_type(ty: &syn::Type) -> Option<String> {
-    if let syn::Type::Path(type_path) = ty {
-        type_path.path.segments.last().and_then(|seg| {
-            let ident = seg.ident.to_string();
-            if ident == "f32" || ident == "f64" {
-                Some(ident)
-            } else {
-                None
+    match ty {
+        syn::Type::Path(type_path) => {
+            if let Some(seg) = type_path.path.segments.last() {
+                let ident = seg.ident.to_string();
+                if ident == "f32" || ident == "f64" {
+                    return Some(ident);
+                }
+                if let syn::PathArguments::AngleBracketed(args) = &seg.arguments {
+                    if let Some(syn::GenericArgument::Type(inner_ty)) = args.args.first() {
+                        return get_base_type(inner_ty);
+                    }
+                }
             }
-        })
-    } else {
-        None
+            None
+        }
+        syn::Type::Reference(type_ref) => get_base_type(&type_ref.elem),
+        syn::Type::Slice(type_slice) => get_base_type(&type_slice.elem),
+        syn::Type::Array(type_array) => get_base_type(&type_array.elem),
+        _ => None,
     }
 }
