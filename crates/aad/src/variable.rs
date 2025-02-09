@@ -22,8 +22,7 @@ use num_traits::{One, Zero};
 /// * `tape` - Reference to the tape that records operations on this variable
 /// * `value` - The current value of the variable
 pub struct Variable<'a, F> {
-    pub(crate) index: usize,
-    pub(crate) tape: Option<&'a Tape<F>>,
+    pub(crate) index: Option<(usize, &'a Tape<F>)>,
     pub(crate) value: F,
 }
 
@@ -40,22 +39,36 @@ impl<F: Copy> Variable<'_, F> {
     #[inline]
     #[must_use]
     pub fn apply_binary_function(self, rhs: Self, f: BinaryFn<F>, dfdx: BinaryPairFn<F>) -> Self {
-        let tape = self.tape.or(rhs.tape);
-        match tape {
-            Some(tape) => Variable {
-                index: {
-                    let operations = &mut tape.operations.borrow_mut();
-                    let count = (*operations).len();
-                    let df = dfdx(self.value, rhs.value);
-                    (*operations).push(OperationRecord([(self.index, df.0), (rhs.index, df.1)]));
-                    count
-                },
-                tape: Some(tape),
+        #[inline]
+        fn create_index<'a, F>(
+            value: F,
+            rhs: Variable<'a, F>,
+            dfdx: fn(F, F) -> (F, F),
+            i: usize,
+            j: usize,
+            tape: &'a Tape<F>,
+        ) -> (usize, &'a Tape<F>) {
+            let operations = &mut tape.operations.borrow_mut();
+            let count = (*operations).len();
+            let df = dfdx(value, rhs.value);
+            (*operations).push(OperationRecord([(i, df.0), (j, df.1)]));
+            (count, tape)
+        }
+        match (self.index, rhs.index) {
+            (Some((i, tape)), Some((j, _))) => Variable {
+                index: Some(create_index(self.value, rhs, dfdx, i, j, tape)),
                 value: f(self.value, rhs.value),
             },
-            None => Variable {
-                index: usize::MAX,
-                tape: None,
+            (None, None) => Variable {
+                index: None,
+                value: f(self.value, rhs.value),
+            },
+            (None, Some((j, tape))) => Variable {
+                index: Some(create_index(self.value, rhs, dfdx, usize::MAX, j, tape)),
+                value: f(self.value, rhs.value),
+            },
+            (Some((i, tape)), None) => Variable {
+                index: Some(create_index(self.value, rhs, dfdx, i, usize::MAX, tape)),
                 value: f(self.value, rhs.value),
             },
         }
@@ -66,23 +79,21 @@ impl<F: Copy + Zero> Variable<'_, F> {
     #[inline]
     #[must_use]
     pub fn apply_unary_function(self, f: UnaryFn<F>, df: UnaryFn<F>) -> Self {
-        match self.tape {
-            Some(tape) => Variable {
+        match self.index {
+            Some((i, tape)) => Variable {
                 index: {
                     let operations = &mut tape.operations.borrow_mut();
                     let count = (*operations).len();
                     (*operations).push(OperationRecord([
-                        (self.index, df(self.value)),
+                        (i, df(self.value)),
                         (usize::MAX, F::zero()),
                     ]));
-                    count
+                    Some((count, tape))
                 },
-                tape: Some(tape),
                 value: f(self.value),
             },
             None => Variable {
-                index: usize::MAX,
-                tape: None,
+                index: None,
                 value: f(self.value),
             },
         }
@@ -96,23 +107,21 @@ impl<F: Copy + Zero> Variable<'_, F> {
         df: BinaryFn<F, T>,
         scalar: T,
     ) -> Self {
-        match self.tape {
-            Some(tape) => Variable {
+        match self.index {
+            Some((i, tape)) => Variable {
                 index: {
                     let operations = &mut tape.operations.borrow_mut();
                     let count = (*operations).len();
                     (*operations).push(OperationRecord([
-                        (self.index, df(self.value, scalar)),
+                        (i, df(self.value, scalar)),
                         (usize::MAX, F::zero()),
                     ]));
-                    count
+                    Some((count, tape))
                 },
-                tape: Some(tape),
                 value: f(self.value, scalar),
             },
             None => Variable {
-                index: usize::MAX,
-                tape: None,
+                index: None,
                 value: f(self.value, scalar),
             },
         }
@@ -123,9 +132,9 @@ impl<F: Copy + One + Zero> Variable<'_, F> {
     #[inline]
     #[must_use]
     pub fn compute_gradients(&self) -> Gradients<F> {
-        let operations = &mut self.tape.unwrap().operations.borrow_mut();
+        let operations = &mut self.index.unwrap().1.operations.borrow_mut();
         let mut grads = vec![F::zero(); (*operations).len()];
-        grads[self.index] = F::one();
+        grads[self.index.unwrap().0] = F::one();
 
         for (i, operation) in (*operations).iter().enumerate().rev() {
             let grad = grads[i];
@@ -196,10 +205,6 @@ impl<'a, F> Variable<'a, F> {
     #[inline]
     #[must_use]
     pub fn constant(value: F) -> Variable<'a, F> {
-        Variable {
-            index: usize::MAX,
-            tape: None,
-            value,
-        }
+        Variable { index: None, value }
     }
 }

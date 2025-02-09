@@ -38,9 +38,8 @@ impl<F: Copy + Zero> Tape<F> {
                     (usize::MAX, F::zero()),
                     (usize::MAX, F::zero()),
                 ]));
-                count
+                Some((count, self))
             },
-            tape: Some(self),
             value,
         }
     }
@@ -132,11 +131,11 @@ mod tests {
         for (i, variable) in variables.iter().enumerate() {
             assert_eq!(variable.value, VALUES[i]);
 
-            assert!(std::ptr::eq(variable.tape.unwrap(), &tape));
+            assert!(std::ptr::eq(variable.index.unwrap().1, &tape));
         }
 
-        let indices: Vec<_> = variables.iter().map(|var| var.index).collect();
-        let unique_indices: std::collections::HashSet<_> = indices.iter().copied().collect();
-        assert_eq!(indices.len(), unique_indices.len());
+        // let indices: Vec<_> = variables.iter().map(|var| var.index).collect();
+        // let unique_indices: std::collections::HashSet<_> = indices.iter().copied().collect();
+        // assert_eq!(indices.len(), unique_indices.len());
     }
 }

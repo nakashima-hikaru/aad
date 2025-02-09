@@ -10,21 +10,19 @@ macro_rules! impl_scalar_add {
 
             #[inline]
             fn add(self, rhs: $scalar) -> Self::Output {
-                match self.tape {
-                    Some(tape) => Variable {
+                match self.index {
+                    Some((i, tape)) => Variable {
                         index: {
                             let mut operations = tape.operations.borrow_mut();
                             let count = operations.len();
                             operations
-                                .push(OperationRecord([(self.index, F::one()), (0, F::zero())]));
-                            count
+                                .push(OperationRecord([(i, F::one()), (usize::MAX, F::zero())]));
+                            Some((count, tape))
                         },
-                        tape: Some(tape),
                         value: self.value + rhs,
                     },
                     None => Variable {
-                        index: usize::MAX,
-                        tape: None,
+                        index: None,
                         value: self.value + rhs,
                     },
                 }
@@ -58,21 +56,19 @@ macro_rules! impl_scalar_sub {
 
             #[inline]
             fn sub(self, rhs: $scalar) -> Self::Output {
-                match self.tape {
-                    Some(tape) => Variable {
+                match self.index {
+                    Some((i, tape)) => Variable {
                         index: {
                             let mut operations = tape.operations.borrow_mut();
                             let count = operations.len();
                             operations
-                                .push(OperationRecord([(self.index, F::one()), (0, F::zero())]));
-                            count
+                                .push(OperationRecord([(i, F::one()), (usize::MAX, F::zero())]));
+                            Some((count, tape))
                         },
-                        tape: Some(tape),
                         value: self.value - rhs,
                     },
                     None => Variable {
-                        index: usize::MAX,
-                        tape: None,
+                        index: None,
                         value: self.value - rhs,
                     },
                 }
@@ -108,23 +104,21 @@ macro_rules! impl_scalar_mul {
 
             #[inline]
             fn mul(self, rhs: $scalar) -> Self::Output {
-                match self.tape {
-                    Some(tape) => Variable {
+                match self.index {
+                    Some((i, tape)) => Variable {
                         index: {
                             let mut operations = tape.operations.borrow_mut();
                             let count = operations.len();
                             operations.push(OperationRecord([
-                                (self.index, F::from(rhs).unwrap()),
+                                (i, F::from(rhs).unwrap()),
                                 (usize::MAX, F::zero()),
                             ]));
-                            count
+                            Some((count, tape))
                         },
-                        tape: Some(tape),
                         value: self.value * rhs,
                     },
                     None => Variable {
-                        index: usize::MAX,
-                        tape: None,
+                        index: None,
                         value: self.value * rhs,
                     },
                 }
@@ -160,23 +154,21 @@ macro_rules! impl_scalar_div {
 
             #[inline]
             fn div(self, rhs: $scalar) -> Self::Output {
-                match self.tape {
-                    Some(tape) => Variable {
+                match self.index {
+                    Some((i, tape)) => Variable {
                         index: {
                             let operations = &mut tape.operations.borrow_mut();
                             let count = operations.len();
                             operations.push(OperationRecord([
-                                (self.index, F::from(rhs.recip()).unwrap()),
+                                (i, F::from(rhs.recip()).unwrap()),
                                 (usize::MAX, F::zero()),
                             ]));
-                            count
+                            Some((count, tape))
                         },
-                        tape: Some(tape),
                         value: self.value / rhs,
                     },
                     None => Variable {
-                        index: usize::MAX,
-                        tape: None,
+                        index: None,
                         value: self.value / rhs,
                     },
                 }

@@ -1,5 +1,6 @@
 use crate::operation_record::OperationRecord;
 use crate::variable::Variable;
+use crate::Tape;
 use num_traits::{Float, Inv, One, Zero};
 use std::iter::Sum;
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
@@ -8,23 +9,21 @@ impl<F: Neg<Output = F> + One + Zero> Neg for Variable<'_, F> {
     type Output = Self;
     #[inline]
     fn neg(self) -> Self::Output {
-        match self.tape {
-            Some(tape) => Variable {
+        match self.index {
+            Some((i, tape)) => Variable {
                 index: {
                     let operations = &mut tape.operations.borrow_mut();
                     let count = (*operations).len();
                     (*operations).push(OperationRecord([
-                        (self.index, F::one().neg()),
+                        (i, F::one().neg()),
                         (usize::MAX, F::zero()),
                     ]));
-                    count
+                    Some((count, tape))
                 },
-                tape: self.tape,
                 value: self.value.neg(),
             },
             None => Variable {
-                index: usize::MAX,
-                tape: None,
+                index: None,
                 value: self.value.neg(),
             },
         }
@@ -36,24 +35,33 @@ impl<F: Add<F, Output = F> + One> Add<Self> for Variable<'_, F> {
 
     #[inline]
     fn add(self, rhs: Self) -> Self::Output {
-        let tape = self.tape.or(rhs.tape);
-        match tape {
-            Some(tape) => Variable {
-                index: {
-                    let operations = &mut tape.operations.borrow_mut();
-                    let count = (*operations).len();
-                    (*operations).push(OperationRecord([
-                        (self.index, F::one()),
-                        (rhs.index, F::one()),
-                    ]));
-                    count
-                },
-                tape: Some(tape),
+        #[inline]
+        fn create_index<F: Add<F, Output = F> + One>(
+            i: usize,
+            j: usize,
+            tape: &Tape<F>,
+        ) -> (usize, &Tape<F>) {
+            let operations = &mut tape.operations.borrow_mut();
+            let count = (*operations).len();
+            (*operations).push(OperationRecord([(i, F::one()), (j, F::one())]));
+            (count, tape)
+        }
+
+        match (self.index, rhs.index) {
+            (Some((i, tape)), Some((j, _))) => Variable {
+                index: Some(create_index(i, j, tape)),
                 value: self.value + rhs.value,
             },
-            None => Variable {
-                index: usize::MAX,
-                tape: None,
+            (None, None) => Variable {
+                index: None,
+                value: self.value + rhs.value,
+            },
+            (None, Some((j, tape))) => Variable {
+                index: Some(create_index(usize::MAX, j, tape)),
+                value: self.value + rhs.value,
+            },
+            (Some((i, tape)), None) => Variable {
+                index: Some(create_index(i, usize::MAX, tape)),
                 value: self.value + rhs.value,
             },
         }
@@ -65,24 +73,33 @@ impl<F: Sub<F, Output = F> + One + Neg<Output = F>> Sub<Self> for Variable<'_, F
 
     #[inline]
     fn sub(self, rhs: Self) -> Self::Output {
-        let tape = self.tape.or(rhs.tape);
-        match tape {
-            Some(tape) => Variable {
-                index: {
-                    let operations = &mut tape.operations.borrow_mut();
-                    let count = (*operations).len();
-                    (*operations).push(OperationRecord([
-                        (self.index, F::one()),
-                        (rhs.index, -F::one()),
-                    ]));
-                    count
-                },
-                tape: Some(tape),
+        #[inline]
+        fn create_index<F: Sub<F, Output = F> + One + Neg<Output = F>>(
+            i: usize,
+            j: usize,
+            tape: &Tape<F>,
+        ) -> (usize, &Tape<F>) {
+            let operations = &mut tape.operations.borrow_mut();
+            let count = (*operations).len();
+            (*operations).push(OperationRecord([(i, F::one()), (j, -F::one())]));
+            (count, tape)
+        }
+
+        match (self.index, rhs.index) {
+            (Some((i, tape)), Some((j, _))) => Variable {
+                index: Some(create_index(i, j, tape)),
                 value: self.value - rhs.value,
             },
-            None => Variable {
-                index: usize::MAX,
-                tape: None,
+            (None, None) => Variable {
+                index: None,
+                value: self.value - rhs.value,
+            },
+            (None, Some((j, tape))) => Variable {
+                index: Some(create_index(usize::MAX, j, tape)),
+                value: self.value - rhs.value,
+            },
+            (Some((i, tape)), None) => Variable {
+                index: Some(create_index(i, usize::MAX, tape)),
                 value: self.value - rhs.value,
             },
         }
@@ -94,24 +111,35 @@ impl<F: Mul<F, Output = F> + Copy> Mul<Self> for Variable<'_, F> {
 
     #[inline]
     fn mul(self, rhs: Self) -> Self::Output {
-        let tape = self.tape.or(rhs.tape);
-        match tape {
-            Some(tape) => Variable {
-                index: {
-                    let operations = &mut tape.operations.borrow_mut();
-                    let count = (*operations).len();
-                    (*operations).push(OperationRecord([
-                        (self.index, rhs.value),
-                        (rhs.index, self.value),
-                    ]));
-                    count
-                },
-                tape: Some(tape),
+        #[inline]
+        fn create_index<F: Mul<F, Output = F> + Copy>(
+            value: F,
+            rhs: F,
+            i: usize,
+            j: usize,
+            tape: &Tape<F>,
+        ) -> (usize, &Tape<F>) {
+            let operations = &mut tape.operations.borrow_mut();
+            let count = (*operations).len();
+            (*operations).push(OperationRecord([(i, rhs), (j, value)]));
+            (count, tape)
+        }
+
+        match (self.index, rhs.index) {
+            (Some((i, tape)), Some((j, _))) => Variable {
+                index: Some(create_index(self.value, rhs.value, i, j, tape)),
                 value: self.value * rhs.value,
             },
-            None => Variable {
-                index: usize::MAX,
-                tape: None,
+            (None, None) => Variable {
+                index: None,
+                value: self.value * rhs.value,
+            },
+            (None, Some((j, tape))) => Variable {
+                index: Some(create_index(self.value, rhs.value, usize::MAX, j, tape)),
+                value: self.value * rhs.value,
+            },
+            (Some((i, tape)), None) => Variable {
+                index: Some(create_index(self.value, rhs.value, i, usize::MAX, tape)),
                 value: self.value * rhs.value,
             },
         }
@@ -166,8 +194,7 @@ impl<F: Copy + Zero + Add<F, Output = F> + One> Sum for Variable<'_, F> {
         let init_var = match iter.next() {
             None => {
                 return Variable {
-                    index: usize::MAX,
-                    tape: None,
+                    index: None,
                     value: F::zero(),
                 }
             }
@@ -187,8 +214,7 @@ impl<'a, 'b, F: Copy + Zero + Add<F, Output = F> + One> Sum<&'b Variable<'a, F>>
         let init_var = match iter.next() {
             None => {
                 return Variable {
-                    index: usize::MAX,
-                    tape: None,
+                    index: None,
                     value: F::zero(),
                 }
             }
@@ -213,7 +239,7 @@ mod tests {
         let sum: Variable<f64> = variables.into_iter().sum();
 
         assert_eq!(sum.value, 6.0);
-        assert!(std::ptr::eq(sum.tape.unwrap(), &tape));
+        assert!(std::ptr::eq(sum.index.unwrap().1, &tape));
     }
 
     #[test]
@@ -225,7 +251,7 @@ mod tests {
         let sum: Variable<f64> = variables.into_iter().sum();
 
         assert_eq!(sum.value, 0.0);
-        assert!(sum.tape.is_none());
+        assert!(sum.index.is_none());
     }
 
     #[test]
@@ -241,6 +267,6 @@ mod tests {
         let y = sum + x;
 
         assert_eq!(y.value, 5.0);
-        assert!(std::ptr::eq(y.tape.unwrap(), &tape));
+        assert!(std::ptr::eq(y.index.unwrap().1, &tape));
     }
 }

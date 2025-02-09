@@ -8,7 +8,7 @@ where
     #[inline]
     #[must_use]
     pub fn get_gradient(&self, x: &Variable<F>) -> F {
-        self.0[x.index]
+        self.0[x.index.unwrap().0]
     }
 
     #[inline]
