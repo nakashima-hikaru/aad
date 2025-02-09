@@ -10,6 +10,7 @@ macro_rules! impl_scalar_add {
 
             #[inline]
             fn add(self, rhs: $scalar) -> Self::Output {
+                let value = self.value + rhs;
                 match self.index {
                     Some((i, tape)) => Variable {
                         index: {
@@ -19,12 +20,9 @@ macro_rules! impl_scalar_add {
                                 .push(OperationRecord([(i, F::one()), (usize::MAX, F::zero())]));
                             Some((count, tape))
                         },
-                        value: self.value + rhs,
+                        value,
                     },
-                    None => Variable {
-                        index: None,
-                        value: self.value + rhs,
-                    },
+                    None => Variable { index: None, value },
                 }
             }
         }
@@ -56,6 +54,7 @@ macro_rules! impl_scalar_sub {
 
             #[inline]
             fn sub(self, rhs: $scalar) -> Self::Output {
+                let value = self.value - rhs;
                 match self.index {
                     Some((i, tape)) => Variable {
                         index: {
@@ -65,12 +64,9 @@ macro_rules! impl_scalar_sub {
                                 .push(OperationRecord([(i, F::one()), (usize::MAX, F::zero())]));
                             Some((count, tape))
                         },
-                        value: self.value - rhs,
+                        value,
                     },
-                    None => Variable {
-                        index: None,
-                        value: self.value - rhs,
-                    },
+                    None => Variable { index: None, value },
                 }
             }
         }
@@ -104,6 +100,7 @@ macro_rules! impl_scalar_mul {
 
             #[inline]
             fn mul(self, rhs: $scalar) -> Self::Output {
+                let value = self.value * rhs;
                 match self.index {
                     Some((i, tape)) => Variable {
                         index: {
@@ -115,12 +112,9 @@ macro_rules! impl_scalar_mul {
                             ]));
                             Some((count, tape))
                         },
-                        value: self.value * rhs,
+                        value,
                     },
-                    None => Variable {
-                        index: None,
-                        value: self.value * rhs,
-                    },
+                    None => Variable { index: None, value },
                 }
             }
         }
@@ -154,6 +148,7 @@ macro_rules! impl_scalar_div {
 
             #[inline]
             fn div(self, rhs: $scalar) -> Self::Output {
+                let value = self.value / rhs;
                 match self.index {
                     Some((i, tape)) => Variable {
                         index: {
@@ -165,12 +160,9 @@ macro_rules! impl_scalar_div {
                             ]));
                             Some((count, tape))
                         },
-                        value: self.value / rhs,
+                        value,
                     },
-                    None => Variable {
-                        index: None,
-                        value: self.value / rhs,
-                    },
+                    None => Variable { index: None, value },
                 }
             }
         }

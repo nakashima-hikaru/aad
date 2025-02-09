@@ -54,22 +54,20 @@ impl<F: Copy> Variable<'_, F> {
             (*operations).push(OperationRecord([(i, df.0), (j, df.1)]));
             (count, tape)
         }
+        let value = f(self.value, rhs.value);
         match (self.index, rhs.index) {
             (Some((i, tape)), Some((j, _))) => Variable {
                 index: Some(create_index(self.value, rhs, dfdx, i, j, tape)),
-                value: f(self.value, rhs.value),
+                value,
             },
-            (None, None) => Variable {
-                index: None,
-                value: f(self.value, rhs.value),
-            },
+            (None, None) => Variable { index: None, value },
             (None, Some((j, tape))) => Variable {
                 index: Some(create_index(self.value, rhs, dfdx, usize::MAX, j, tape)),
-                value: f(self.value, rhs.value),
+                value,
             },
             (Some((i, tape)), None) => Variable {
                 index: Some(create_index(self.value, rhs, dfdx, i, usize::MAX, tape)),
-                value: f(self.value, rhs.value),
+                value,
             },
         }
     }
@@ -79,6 +77,7 @@ impl<F: Copy + Zero> Variable<'_, F> {
     #[inline]
     #[must_use]
     pub fn apply_unary_function(self, f: UnaryFn<F>, df: UnaryFn<F>) -> Self {
+        let value = f(self.value);
         match self.index {
             Some((i, tape)) => Variable {
                 index: {
@@ -90,12 +89,9 @@ impl<F: Copy + Zero> Variable<'_, F> {
                     ]));
                     Some((count, tape))
                 },
-                value: f(self.value),
+                value,
             },
-            None => Variable {
-                index: None,
-                value: f(self.value),
-            },
+            None => Variable { index: None, value },
         }
     }
 
@@ -107,6 +103,7 @@ impl<F: Copy + Zero> Variable<'_, F> {
         df: BinaryFn<F, T>,
         scalar: T,
     ) -> Self {
+        let value = f(self.value, scalar);
         match self.index {
             Some((i, tape)) => Variable {
                 index: {
@@ -118,12 +115,9 @@ impl<F: Copy + Zero> Variable<'_, F> {
                     ]));
                     Some((count, tape))
                 },
-                value: f(self.value, scalar),
+                value,
             },
-            None => Variable {
-                index: None,
-                value: f(self.value, scalar),
-            },
+            None => Variable { index: None, value },
         }
     }
 }

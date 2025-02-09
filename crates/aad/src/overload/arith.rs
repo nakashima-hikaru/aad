@@ -9,6 +9,7 @@ impl<F: Neg<Output = F> + One + Zero> Neg for Variable<'_, F> {
     type Output = Self;
     #[inline]
     fn neg(self) -> Self::Output {
+        let value = self.value.neg();
         match self.index {
             Some((i, tape)) => Variable {
                 index: {
@@ -20,12 +21,9 @@ impl<F: Neg<Output = F> + One + Zero> Neg for Variable<'_, F> {
                     ]));
                     Some((count, tape))
                 },
-                value: self.value.neg(),
+                value,
             },
-            None => Variable {
-                index: None,
-                value: self.value.neg(),
-            },
+            None => Variable { index: None, value },
         }
     }
 }
@@ -47,22 +45,21 @@ impl<F: Add<F, Output = F> + One> Add<Self> for Variable<'_, F> {
             (count, tape)
         }
 
+        let value = self.value + rhs.value;
+
         match (self.index, rhs.index) {
             (Some((i, tape)), Some((j, _))) => Variable {
                 index: Some(create_index(i, j, tape)),
-                value: self.value + rhs.value,
+                value,
             },
-            (None, None) => Variable {
-                index: None,
-                value: self.value + rhs.value,
-            },
+            (None, None) => Variable { index: None, value },
             (None, Some((j, tape))) => Variable {
                 index: Some(create_index(usize::MAX, j, tape)),
-                value: self.value + rhs.value,
+                value,
             },
             (Some((i, tape)), None) => Variable {
                 index: Some(create_index(i, usize::MAX, tape)),
-                value: self.value + rhs.value,
+                value,
             },
         }
     }
@@ -85,22 +82,21 @@ impl<F: Sub<F, Output = F> + One + Neg<Output = F>> Sub<Self> for Variable<'_, F
             (count, tape)
         }
 
+        let value = self.value - rhs.value;
+
         match (self.index, rhs.index) {
             (Some((i, tape)), Some((j, _))) => Variable {
                 index: Some(create_index(i, j, tape)),
-                value: self.value - rhs.value,
+                value,
             },
-            (None, None) => Variable {
-                index: None,
-                value: self.value - rhs.value,
-            },
+            (None, None) => Variable { index: None, value },
             (None, Some((j, tape))) => Variable {
                 index: Some(create_index(usize::MAX, j, tape)),
-                value: self.value - rhs.value,
+                value,
             },
             (Some((i, tape)), None) => Variable {
                 index: Some(create_index(i, usize::MAX, tape)),
-                value: self.value - rhs.value,
+                value,
             },
         }
     }
@@ -125,22 +121,21 @@ impl<F: Mul<F, Output = F> + Copy> Mul<Self> for Variable<'_, F> {
             (count, tape)
         }
 
+        let value = self.value * rhs.value;
+
         match (self.index, rhs.index) {
             (Some((i, tape)), Some((j, _))) => Variable {
                 index: Some(create_index(self.value, rhs.value, i, j, tape)),
-                value: self.value * rhs.value,
+                value,
             },
-            (None, None) => Variable {
-                index: None,
-                value: self.value * rhs.value,
-            },
+            (None, None) => Variable { index: None, value },
             (None, Some((j, tape))) => Variable {
                 index: Some(create_index(self.value, rhs.value, usize::MAX, j, tape)),
-                value: self.value * rhs.value,
+                value,
             },
             (Some((i, tape)), None) => Variable {
                 index: Some(create_index(self.value, rhs.value, i, usize::MAX, tape)),
-                value: self.value * rhs.value,
+                value,
             },
         }
     }
@@ -190,18 +185,7 @@ impl<F: Copy + Div<Self, Output = Self> + Float + Inv<Output = F>> DivAssign<Sel
 impl<F: Copy + Zero + Add<F, Output = F> + One> Sum for Variable<'_, F> {
     #[inline]
     fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
-        let mut iter = iter;
-        let init_var = match iter.next() {
-            None => {
-                return Variable {
-                    index: None,
-                    value: F::zero(),
-                }
-            }
-            Some(x) => x,
-        };
-
-        iter.fold(init_var, |acc, x| acc + x)
+        iter.fold(Variable::zero(), |acc, x| acc + x)
     }
 }
 
@@ -210,18 +194,7 @@ impl<'a, 'b, F: Copy + Zero + Add<F, Output = F> + One> Sum<&'b Variable<'a, F>>
 {
     #[inline]
     fn sum<I: Iterator<Item = &'b Variable<'a, F>>>(iter: I) -> Self {
-        let mut iter = iter;
-        let init_var = match iter.next() {
-            None => {
-                return Variable {
-                    index: None,
-                    value: F::zero(),
-                }
-            }
-            Some(x) => x,
-        };
-
-        iter.fold(*init_var, |acc, x| acc + *x)
+        iter.fold(Variable::zero(), |acc, x| acc + *x)
     }
 }
 
