@@ -34,7 +34,10 @@ impl<F: Copy + Zero> Tape<F> {
             index: {
                 let mut operations = self.operations.borrow_mut();
                 let count = (*operations).len();
-                (*operations).push(OperationRecord([(0, F::zero()), (0, F::zero())]));
+                (*operations).push(OperationRecord([
+                    (usize::MAX, F::zero()),
+                    (usize::MAX, F::zero()),
+                ]));
                 count
             },
             tape: Some(self),

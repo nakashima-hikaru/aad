@@ -15,7 +15,7 @@ impl<F: Neg<Output = F> + One + Zero> Neg for Variable<'_, F> {
                     let count = (*operations).len();
                     (*operations).push(OperationRecord([
                         (self.index, F::one().neg()),
-                        (0, F::zero()),
+                        (usize::MAX, F::zero()),
                     ]));
                     count
                 },
@@ -23,7 +23,7 @@ impl<F: Neg<Output = F> + One + Zero> Neg for Variable<'_, F> {
                 value: self.value.neg(),
             },
             None => Variable {
-                index: 0,
+                index: usize::MAX,
                 tape: None,
                 value: self.value.neg(),
             },
@@ -52,7 +52,7 @@ impl<F: Add<F, Output = F> + One> Add<Self> for Variable<'_, F> {
                 value: self.value + rhs.value,
             },
             None => Variable {
-                index: 0,
+                index: usize::MAX,
                 tape: None,
                 value: self.value + rhs.value,
             },
@@ -81,7 +81,7 @@ impl<F: Sub<F, Output = F> + One + Neg<Output = F>> Sub<Self> for Variable<'_, F
                 value: self.value - rhs.value,
             },
             None => Variable {
-                index: 0,
+                index: usize::MAX,
                 tape: None,
                 value: self.value - rhs.value,
             },
@@ -110,7 +110,7 @@ impl<F: Mul<F, Output = F> + Copy> Mul<Self> for Variable<'_, F> {
                 value: self.value * rhs.value,
             },
             None => Variable {
-                index: 0,
+                index: usize::MAX,
                 tape: None,
                 value: self.value * rhs.value,
             },
@@ -166,7 +166,7 @@ impl<F: Copy + Zero + Add<F, Output = F> + One> Sum for Variable<'_, F> {
         let init_var = match iter.next() {
             None => {
                 return Variable {
-                    index: 0,
+                    index: usize::MAX,
                     tape: None,
                     value: F::zero(),
                 }
@@ -187,7 +187,7 @@ impl<'a, 'b, F: Copy + Zero + Add<F, Output = F> + One> Sum<&'b Variable<'a, F>>
         let init_var = match iter.next() {
             None => {
                 return Variable {
-                    index: 0,
+                    index: usize::MAX,
                     tape: None,
                     value: F::zero(),
                 }

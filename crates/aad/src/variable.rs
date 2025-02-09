@@ -1,3 +1,5 @@
+use std::cmp::Ordering;
+
 use crate::gradients::Gradients;
 use crate::operation_record::OperationRecord;
 use crate::tape::Tape;
@@ -52,7 +54,7 @@ impl<F: Copy> Variable<'_, F> {
                 value: f(self.value, rhs.value),
             },
             None => Variable {
-                index: 0,
+                index: usize::MAX,
                 tape: None,
                 value: f(self.value, rhs.value),
             },
@@ -71,7 +73,7 @@ impl<F: Copy + Zero> Variable<'_, F> {
                     let count = (*operations).len();
                     (*operations).push(OperationRecord([
                         (self.index, df(self.value)),
-                        (0, F::zero()),
+                        (usize::MAX, F::zero()),
                     ]));
                     count
                 },
@@ -79,7 +81,7 @@ impl<F: Copy + Zero> Variable<'_, F> {
                 value: f(self.value),
             },
             None => Variable {
-                index: 0,
+                index: usize::MAX,
                 tape: None,
                 value: f(self.value),
             },
@@ -101,7 +103,7 @@ impl<F: Copy + Zero> Variable<'_, F> {
                     let count = (*operations).len();
                     (*operations).push(OperationRecord([
                         (self.index, df(self.value, scalar)),
-                        (0, F::zero()),
+                        (usize::MAX, F::zero()),
                     ]));
                     count
                 },
@@ -109,7 +111,7 @@ impl<F: Copy + Zero> Variable<'_, F> {
                 value: f(self.value, scalar),
             },
             None => Variable {
-                index: 0,
+                index: usize::MAX,
                 tape: None,
                 value: f(self.value, scalar),
             },
@@ -122,8 +124,7 @@ impl<F: Copy + One + Zero> Variable<'_, F> {
     #[must_use]
     pub fn compute_gradients(&self) -> Gradients<F> {
         let operations = &mut self.tape.unwrap().operations.borrow_mut();
-        let count = (*operations).len();
-        let mut grads = vec![F::zero(); count];
+        let mut grads = vec![F::zero(); (*operations).len()];
         grads[self.index] = F::one();
 
         for (i, operation) in (*operations).iter().enumerate().rev() {
@@ -132,10 +133,73 @@ impl<F: Copy + One + Zero> Variable<'_, F> {
                 continue;
             }
             for j in 0..2 {
-                grads[operation.0[j].0] = grads[operation.0[j].0] + operation.0[j].1 * grad;
+                let (idx0, idx1) = operation.0[j];
+                if idx0 == usize::MAX {
+                    continue;
+                }
+                grads[idx0] = grads[idx0] + idx1 * grad;
             }
         }
 
         Gradients(grads)
+    }
+}
+
+impl<F: PartialOrd> PartialOrd for Variable<'_, F> {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        self.value.partial_cmp(&other.value)
+    }
+}
+
+impl<F: PartialOrd> PartialEq for Variable<'_, F> {
+    fn eq(&self, other: &Self) -> bool {
+        self.value == other.value
+    }
+}
+
+impl<F: Zero + Copy + One> Zero for Variable<'_, F> {
+    #[inline]
+    #[must_use]
+    fn zero() -> Self {
+        Self::constant(F::zero())
+    }
+
+    fn is_zero(&self) -> bool {
+        self.value.is_zero()
+    }
+
+    fn set_zero(&mut self) {
+        *self = Self::zero();
+    }
+}
+
+impl<F: One + Copy> One for Variable<'_, F> {
+    #[inline]
+    #[must_use]
+    fn one() -> Self {
+        Self::constant(F::one())
+    }
+
+    fn set_one(&mut self) {
+        *self = Self::one();
+    }
+
+    fn is_one(&self) -> bool
+    where
+        Self: PartialEq,
+    {
+        *self == Self::one()
+    }
+}
+
+impl<'a, F> Variable<'a, F> {
+    #[inline]
+    #[must_use]
+    pub fn constant(value: F) -> Variable<'a, F> {
+        Variable {
+            index: usize::MAX,
+            tape: None,
+            value,
+        }
     }
 }

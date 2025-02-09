@@ -1,5 +1,5 @@
 use crate::Variable;
-use num_traits::Float;
+use num_traits::{Float, One, Zero};
 use std::{
     iter::Sum,
     ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign},
@@ -44,6 +44,11 @@ pub trait FloatLike<Scalar>:
     + Sized
     + Clone
     + Copy
+    + Zero
+    + One
+    + PartialOrd
+    + PartialEq
+    + std::fmt::Debug
 {
     #[must_use]
     fn sin(self) -> Self;

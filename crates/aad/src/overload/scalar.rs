@@ -23,7 +23,7 @@ macro_rules! impl_scalar_add {
                         value: self.value + rhs,
                     },
                     None => Variable {
-                        index: 0,
+                        index: usize::MAX,
                         tape: None,
                         value: self.value + rhs,
                     },
@@ -71,7 +71,7 @@ macro_rules! impl_scalar_sub {
                         value: self.value - rhs,
                     },
                     None => Variable {
-                        index: 0,
+                        index: usize::MAX,
                         tape: None,
                         value: self.value - rhs,
                     },
@@ -115,7 +115,7 @@ macro_rules! impl_scalar_mul {
                             let count = operations.len();
                             operations.push(OperationRecord([
                                 (self.index, F::from(rhs).unwrap()),
-                                (0, F::zero()),
+                                (usize::MAX, F::zero()),
                             ]));
                             count
                         },
@@ -123,7 +123,7 @@ macro_rules! impl_scalar_mul {
                         value: self.value * rhs,
                     },
                     None => Variable {
-                        index: 0,
+                        index: usize::MAX,
                         tape: None,
                         value: self.value * rhs,
                     },
@@ -167,7 +167,7 @@ macro_rules! impl_scalar_div {
                             let count = operations.len();
                             operations.push(OperationRecord([
                                 (self.index, F::from(rhs.recip()).unwrap()),
-                                (0, F::zero()),
+                                (usize::MAX, F::zero()),
                             ]));
                             count
                         },
@@ -175,7 +175,7 @@ macro_rules! impl_scalar_div {
                         value: self.value / rhs,
                     },
                     None => Variable {
-                        index: 0,
+                        index: usize::MAX,
                         tape: None,
                         value: self.value / rhs,
                     },
