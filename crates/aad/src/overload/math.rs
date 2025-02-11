@@ -13,6 +13,48 @@ impl<F: Copy + Inv<Output = F> + Zero + Mul<F, Output = F> + Neg<Output = F>> Va
 impl<F: Float> Variable<'_, F> {
     #[inline]
     #[must_use]
+    pub fn nan() -> Self {
+        Self::constant(F::nan())
+    }
+
+    #[inline]
+    #[must_use]
+    pub fn infinity() -> Self {
+        Self::constant(F::infinity())
+    }
+
+    #[inline]
+    #[must_use]
+    pub fn neg_infinity() -> Self {
+        Self::constant(F::neg_infinity())
+    }
+
+    #[inline]
+    #[must_use]
+    pub fn neg_zero() -> Self {
+        Self::constant(F::neg_zero())
+    }
+
+    #[inline]
+    #[must_use]
+    pub fn min_value() -> Self {
+        Self::constant(F::min_value())
+    }
+
+    #[inline]
+    #[must_use]
+    pub fn max_value() -> Self {
+        Self::constant(F::max_value())
+    }
+
+    #[inline]
+    #[must_use]
+    pub fn min_positive_value() -> Self {
+        Self::constant(F::min_positive_value())
+    }
+
+    #[inline]
+    #[must_use]
     pub fn is_nan(self) -> bool {
         self.value.is_nan()
     }
@@ -156,10 +198,7 @@ impl<F: Float> Variable<'_, F> {
     pub fn mul_add(self, a: F, b: F) -> Self {
         self.apply_scalar_function(|x, (a, b)| F::mul_add(x, a, b), |_, (a, _)| a, (a, b))
     }
-}
 
-// trigonometric functions
-impl<F: Float> Variable<'_, F> {
     #[inline]
     #[must_use]
     pub fn sin(self) -> Self {
@@ -230,5 +269,17 @@ impl<F: Float> Variable<'_, F> {
     #[must_use]
     pub fn atanh(self) -> Self {
         self.apply_unary_function(F::atanh, |x| (F::one() - x * x).recip())
+    }
+
+    #[inline]
+    #[must_use]
+    pub fn exp_m1(self) -> Self {
+        self.apply_unary_function(F::exp_m1, |x| F::exp(x).sub(F::one()))
+    }
+
+    #[inline]
+    #[must_use]
+    pub fn ln_1p(self) -> Self {
+        self.apply_unary_function(F::ln_1p, |x| F::ln(F::one() + x))
     }
 }

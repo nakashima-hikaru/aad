@@ -19,6 +19,13 @@ macro_rules! impl_math_fn {
             Self::$method(self, param)
         }
     };
+
+    ($method:ident, $param1:ty, $param2:ty) => {
+        #[inline]
+        fn $method(self, param1: $param1, param2: $param2) -> Self {
+            Self::$method(self, param1, param2)
+        }
+    };
 }
 
 pub trait FloatLike<Scalar>:
@@ -104,6 +111,9 @@ pub trait FloatLike<Scalar>:
 
     #[must_use]
     fn hypot(self, other: Self) -> Self;
+
+    #[must_use]
+    fn mul_add(self, a: Scalar, b: Scalar) -> Self;
 }
 
 macro_rules! impl_scalar_like_inner {
@@ -136,6 +146,7 @@ macro_rules! impl_scalar_like_inner {
             impl_math_fn!(acosh);
             impl_math_fn!(atanh);
             impl_math_fn!(hypot, Self);
+            impl_math_fn!(mul_add, $primitive, $primitive);
         }
     };
 }

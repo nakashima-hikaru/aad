@@ -149,12 +149,14 @@ impl<F: Copy + One + Zero> Variable<'_, F> {
 }
 
 impl<F: PartialOrd> PartialOrd for Variable<'_, F> {
+    #[inline]
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         self.value.partial_cmp(&other.value)
     }
 }
 
 impl<F: PartialOrd> PartialEq for Variable<'_, F> {
+    #[inline]
     fn eq(&self, other: &Self) -> bool {
         self.value == other.value
     }
@@ -167,10 +169,12 @@ impl<F: Zero + Copy + One> Zero for Variable<'_, F> {
         Self::constant(F::zero())
     }
 
+    #[inline]
     fn is_zero(&self) -> bool {
         self.value.is_zero()
     }
 
+    #[inline]
     fn set_zero(&mut self) {
         *self = Self::zero();
     }
@@ -183,10 +187,12 @@ impl<F: One + Copy> One for Variable<'_, F> {
         Self::constant(F::one())
     }
 
+    #[inline]
     fn set_one(&mut self) {
         *self = Self::one();
     }
 
+    #[inline]
     fn is_one(&self) -> bool
     where
         Self: PartialEq,
