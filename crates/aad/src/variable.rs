@@ -155,10 +155,24 @@ impl<F: PartialOrd> PartialOrd for Variable<'_, F> {
     }
 }
 
+impl<F: PartialOrd<F>> PartialOrd<F> for Variable<'_, F> {
+    #[inline]
+    fn partial_cmp(&self, other: &F) -> Option<Ordering> {
+        self.value.partial_cmp(other)
+    }
+}
+
 impl<F: PartialOrd> PartialEq for Variable<'_, F> {
     #[inline]
     fn eq(&self, other: &Self) -> bool {
         self.value == other.value
+    }
+}
+
+impl<F: PartialEq<F>> PartialEq<F> for Variable<'_, F> {
+    #[inline]
+    fn eq(&self, other: &F) -> bool {
+        self.value == *other
     }
 }
 

@@ -54,7 +54,9 @@ pub trait FloatLike<Scalar>:
     + Zero
     + One
     + PartialOrd
+    + PartialOrd<Scalar>
     + PartialEq
+    + PartialEq<Scalar>
     + std::fmt::Debug
 {
     #[must_use]
