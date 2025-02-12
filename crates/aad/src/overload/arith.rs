@@ -28,6 +28,14 @@ impl<F: Neg<Output = F> + One + Zero> Neg for Variable<'_, F> {
     }
 }
 
+impl<'a, F: Neg<Output = F> + One + Zero + Copy> Neg for &'a Variable<'_, F> {
+    type Output = Variable<'a, F>;
+    #[inline]
+    fn neg(self) -> Self::Output {
+        (*self).neg()
+    }
+}
+
 impl<F: Add<F, Output = F> + One> Add<Self> for Variable<'_, F> {
     type Output = Self;
 
@@ -65,6 +73,14 @@ impl<F: Add<F, Output = F> + One> Add<Self> for Variable<'_, F> {
     }
 }
 
+impl<'a, F: Add<F, Output = F> + One + Copy> Add<Self> for &'a Variable<'_, F> {
+    type Output = Variable<'a, F>;
+    #[inline]
+    fn add(self, rhs: Self) -> Self::Output {
+        (*self).add(*rhs)
+    }
+}
+
 impl<F: Sub<F, Output = F> + One + Neg<Output = F>> Sub<Self> for Variable<'_, F> {
     type Output = Self;
 
@@ -99,6 +115,14 @@ impl<F: Sub<F, Output = F> + One + Neg<Output = F>> Sub<Self> for Variable<'_, F
                 value,
             },
         }
+    }
+}
+
+impl<'a, F: Sub<F, Output = F> + One + Neg<Output = F> + Copy> Sub<Self> for &'a Variable<'_, F> {
+    type Output = Variable<'a, F>;
+    #[inline]
+    fn sub(self, rhs: Self) -> Self::Output {
+        (*self).sub(*rhs)
     }
 }
 
@@ -141,6 +165,14 @@ impl<F: Mul<F, Output = F> + Copy> Mul<Self> for Variable<'_, F> {
     }
 }
 
+impl<'a, F: Mul<F, Output = F> + Copy> Mul<Self> for &'a Variable<'_, F> {
+    type Output = Variable<'a, F>;
+    #[inline]
+    fn mul(self, rhs: Self) -> Self::Output {
+        (*self).mul(*rhs)
+    }
+}
+
 impl<F: Copy + Div<F, Output = F> + Inv<Output = F> + Neg<Output = F> + Mul<Output = F>> Div<Self>
     for Variable<'_, F>
 {
@@ -152,10 +184,27 @@ impl<F: Copy + Div<F, Output = F> + Inv<Output = F> + Neg<Output = F> + Mul<Outp
     }
 }
 
+impl<'a, F: Copy + Div<F, Output = F> + Inv<Output = F> + Neg<Output = F> + Mul<Output = F>>
+    Div<Self> for &'a Variable<'_, F>
+{
+    type Output = Variable<'a, F>;
+    #[inline]
+    fn div(self, rhs: Self) -> Self::Output {
+        (*self).div(*rhs)
+    }
+}
+
 impl<F: Copy + One + Zero> AddAssign<Self> for Variable<'_, F> {
     #[inline]
     fn add_assign(&mut self, rhs: Self) {
         *self = *self + rhs;
+    }
+}
+
+impl<'a, F: Copy + One + Zero> AddAssign<&'a Variable<'_, F>> for Variable<'a, F> {
+    #[inline]
+    fn add_assign(&mut self, rhs: &'a Variable<'a, F>) {
+        *self = *self + *rhs;
     }
 }
 
@@ -166,10 +215,25 @@ impl<F: Copy + One + Neg<Output = F> + Sub<F, Output = F>> SubAssign<Self> for V
     }
 }
 
+impl<'a, F: Copy + One + Neg<Output = F> + Sub<F, Output = F>> SubAssign<&'a Variable<'_, F>>
+    for Variable<'a, F>
+{
+    #[inline]
+    fn sub_assign(&mut self, rhs: &'a Variable<'_, F>) {
+        *self = *self - *rhs;
+    }
+}
 impl<F: Copy + Mul<F, Output = F>> MulAssign<Self> for Variable<'_, F> {
     #[inline]
     fn mul_assign(&mut self, rhs: Self) {
         *self = *self * rhs;
+    }
+}
+
+impl<'a, F: Copy + Mul<F, Output = F>> MulAssign<&'a Variable<'_, F>> for Variable<'a, F> {
+    #[inline]
+    fn mul_assign(&mut self, rhs: &'a Variable<'a, F>) {
+        *self = *self * *rhs;
     }
 }
 
@@ -179,6 +243,15 @@ impl<F: Copy + Div<Self, Output = Self> + Float + Inv<Output = F>> DivAssign<Sel
     #[inline]
     fn div_assign(&mut self, rhs: Self) {
         *self = *self / rhs;
+    }
+}
+
+impl<'a, F: Copy + Div<Self, Output = Self> + Float + Inv<Output = F>>
+    DivAssign<&'a Variable<'a, F>> for Variable<'a, F>
+{
+    #[inline]
+    fn div_assign(&mut self, rhs: &'a Variable<'a, F>) {
+        *self = *self / *rhs;
     }
 }
 

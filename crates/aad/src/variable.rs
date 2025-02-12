@@ -222,3 +222,10 @@ impl<'a, F> Variable<'a, F> {
         Variable { index: None, value }
     }
 }
+
+impl<F> From<F> for Variable<'_, F> {
+    #[inline]
+    fn from(value: F) -> Self {
+        Self::constant(value)
+    }
+}

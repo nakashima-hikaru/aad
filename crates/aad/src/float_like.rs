@@ -58,6 +58,8 @@ pub trait FloatLike<Scalar>:
     + PartialEq
     + PartialEq<Scalar>
     + std::fmt::Debug
+    + Into<Scalar>
+    + From<Scalar>
 {
     #[must_use]
     fn sin(self) -> Self;
@@ -155,6 +157,12 @@ macro_rules! impl_scalar_like_inner {
 
 macro_rules! impl_scalar_like {
     ($primitive:ty) => {
+        impl From<Variable<'_, $primitive>> for $primitive {
+            #[inline]
+            fn from(variable: Variable<'_, $primitive>) -> Self {
+                variable.value
+            }
+        }
         impl_scalar_like_inner!($primitive, $primitive; );
         impl_scalar_like_inner!(
             $primitive,
