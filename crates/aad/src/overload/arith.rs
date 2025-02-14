@@ -81,6 +81,14 @@ impl<'tape, F: Add<F, Output = F> + One + Copy> Add<Self> for &Variable<'tape, F
     }
 }
 
+impl<'tape, F: Add<F, Output = F> + One + Copy> Add<Variable<'tape, F>> for &Variable<'tape, F> {
+    type Output = Variable<'tape, F>;
+    #[inline]
+    fn add(self, rhs: Variable<'tape, F>) -> Self::Output {
+        (*self).add(rhs)
+    }
+}
+
 impl<F: Sub<F, Output = F> + One + Neg<Output = F>> Sub<Self> for Variable<'_, F> {
     type Output = Self;
 
@@ -126,6 +134,13 @@ impl<'tape, F: Sub<F, Output = F> + One + Neg<Output = F> + Copy> Sub<Self> for 
     }
 }
 
+impl<'tape, F: Sub<F, Output = F> + One + Neg<Output = F> + Copy> Sub<Variable<'tape, F>> for &Variable<'tape, F> {
+    type Output = Variable<'tape, F>;
+    #[inline]
+    fn sub(self, rhs: Variable<'tape, F>) -> Self::Output {
+        (*self).sub(rhs)
+    }
+}
 impl<F: Mul<F, Output = F> + Copy> Mul<Self> for Variable<'_, F> {
     type Output = Self;
 
@@ -173,6 +188,14 @@ impl<'tape, F: Mul<F, Output = F> + Copy> Mul<Self> for &Variable<'tape, F> {
     }
 }
 
+impl<'tape, F: Mul<F, Output = F> + Copy> Mul<Variable<'tape, F>> for &Variable<'tape, F> {
+    type Output = Variable<'tape, F>;
+    #[inline]
+    fn mul(self, rhs: Variable<'tape, F>) -> Self::Output {
+        (*self).mul(rhs)
+    }
+}
+
 impl<F: Copy + Div<F, Output = F> + Inv<Output = F> + Neg<Output = F> + Mul<Output = F>> Div<Self>
     for Variable<'_, F>
 {
@@ -191,6 +214,16 @@ impl<'tape, F: Copy + Div<F, Output = F> + Inv<Output = F> + Neg<Output = F> + M
     #[inline]
     fn div(self, rhs: Self) -> Self::Output {
         (*self).div(*rhs)
+    }
+}
+
+impl<'tape, F: Copy + Div<F, Output = F> + Inv<Output = F> + Neg<Output = F> + Mul<Output = F>>
+    Div<Variable<'tape, F>> for &Variable<'tape, F>
+{
+    type Output = Variable<'tape, F>;
+    #[inline]
+    fn div(self, rhs: Variable<'tape, F>) -> Self::Output {
+        (*self).div(rhs)
     }
 }
 
