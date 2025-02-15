@@ -228,3 +228,22 @@ impl<F> From<F> for Variable<'_, F> {
         Self::constant(value)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_compute_second_gradients() {
+        let tape = Tape::new();
+        let tape2 = Tape::new();
+        let [x, y] = tape.create_variables(&[1.0, 2.0]);
+        let [x, y] = tape2.create_variables(&[x, y]);
+        let z = x * x + y;
+        let grads = z.compute_gradients();
+        let grad = grads.get_gradient(&x);
+        let z = grad.compute_gradients();
+        let grad2 = z.get_gradient(&x.value);
+        assert_eq!(grad2, 2.0);
+    }
+}
