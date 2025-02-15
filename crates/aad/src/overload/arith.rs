@@ -36,6 +36,14 @@ impl<'tape, F: Neg<Output = F> + One + Zero + Copy> Neg for &Variable<'tape, F> 
     }
 }
 
+impl<'tape, F: Neg<Output = F> + One + Zero + Copy> Neg for &mut Variable<'tape, F> {
+    type Output = Variable<'tape, F>;
+    #[inline]
+    fn neg(self) -> Self::Output {
+        (*self).neg()
+    }
+}
+
 impl<F: Add<F, Output = F> + One> Add<Self> for Variable<'_, F> {
     type Output = Self;
 
@@ -43,13 +51,12 @@ impl<F: Add<F, Output = F> + One> Add<Self> for Variable<'_, F> {
     fn add(self, rhs: Self) -> Self::Output {
         #[inline]
         fn create_index<F: Add<F, Output = F> + One>(
-            i: usize,
-            j: usize,
+            idx: [usize; 2],
             tape: &Tape<F>,
         ) -> (usize, &Tape<F>) {
             let operations = &mut tape.operations.borrow_mut();
             let count = (*operations).len();
-            (*operations).push(OperationRecord([(i, F::one()), (j, F::one())]));
+            (*operations).push(OperationRecord([(idx[0], F::one()), (idx[1], F::one())]));
             (count, tape)
         }
 
@@ -57,35 +64,19 @@ impl<F: Add<F, Output = F> + One> Add<Self> for Variable<'_, F> {
 
         match (self.index, rhs.index) {
             (Some((i, tape)), Some((j, _))) => Variable {
-                index: Some(create_index(i, j, tape)),
+                index: Some(create_index([i, j], tape)),
                 value,
             },
             (None, None) => Variable { index: None, value },
             (None, Some((j, tape))) => Variable {
-                index: Some(create_index(usize::MAX, j, tape)),
+                index: Some(create_index([usize::MAX, j], tape)),
                 value,
             },
             (Some((i, tape)), None) => Variable {
-                index: Some(create_index(i, usize::MAX, tape)),
+                index: Some(create_index([i, usize::MAX], tape)),
                 value,
             },
         }
-    }
-}
-
-impl<'tape, F: Add<F, Output = F> + One + Copy> Add<Self> for &Variable<'tape, F> {
-    type Output = Variable<'tape, F>;
-    #[inline]
-    fn add(self, rhs: Self) -> Self::Output {
-        (*self).add(*rhs)
-    }
-}
-
-impl<'tape, F: Add<F, Output = F> + One + Copy> Add<Variable<'tape, F>> for &Variable<'tape, F> {
-    type Output = Variable<'tape, F>;
-    #[inline]
-    fn add(self, rhs: Variable<'tape, F>) -> Self::Output {
-        (*self).add(rhs)
     }
 }
 
@@ -126,7 +117,9 @@ impl<F: Sub<F, Output = F> + One + Neg<Output = F>> Sub<Self> for Variable<'_, F
     }
 }
 
-impl<'tape, F: Sub<F, Output = F> + One + Neg<Output = F> + Copy> Sub<Self> for &Variable<'tape, F> {
+impl<'tape, F: Sub<F, Output = F> + One + Neg<Output = F> + Copy> Sub<Self>
+    for &Variable<'tape, F>
+{
     type Output = Variable<'tape, F>;
     #[inline]
     fn sub(self, rhs: Self) -> Self::Output {
@@ -134,13 +127,16 @@ impl<'tape, F: Sub<F, Output = F> + One + Neg<Output = F> + Copy> Sub<Self> for 
     }
 }
 
-impl<'tape, F: Sub<F, Output = F> + One + Neg<Output = F> + Copy> Sub<Variable<'tape, F>> for &Variable<'tape, F> {
+impl<'tape, F: Sub<F, Output = F> + One + Neg<Output = F> + Copy> Sub<Variable<'tape, F>>
+    for &Variable<'tape, F>
+{
     type Output = Variable<'tape, F>;
     #[inline]
     fn sub(self, rhs: Variable<'tape, F>) -> Self::Output {
         (*self).sub(rhs)
     }
 }
+
 impl<F: Mul<F, Output = F> + Copy> Mul<Self> for Variable<'_, F> {
     type Output = Self;
 
@@ -303,6 +299,46 @@ impl<'tape, 'a, F: Copy + Zero + Add<F, Output = F> + One> Sum<&'a Variable<'tap
         iter.fold(Variable::zero(), |acc, x| acc + *x)
     }
 }
+
+macro_rules! impl_add_ref {
+    (for $lhs:ty, rhs: & $rhs_inner:ty, deref_rhs) => {
+        impl<'tape, F: Add<F, Output = F> + One + Copy> Add<&$rhs_inner> for $lhs {
+            type Output = Variable<'tape, F>;
+            #[inline]
+            fn add(self, rhs: &$rhs_inner) -> Self::Output {
+                (*self).add(*rhs)
+            }
+        }
+    };
+
+    (for $lhs:ty, rhs: &mut $rhs_inner:ty, deref_rhs) => {
+        impl<'tape, F: Add<F, Output = F> + One + Copy> Add<&mut $rhs_inner> for $lhs {
+            type Output = Variable<'tape, F>;
+            #[inline]
+            fn add(self, rhs: &mut $rhs_inner) -> Self::Output {
+                (*self).add(*rhs)
+            }
+        }
+    };
+
+    (for $lhs:ty, rhs: $rhs:ty, no_deref_rhs) => {
+        impl<'tape, F: Add<F, Output = F> + One + Copy> Add<$rhs> for $lhs {
+            type Output = Variable<'tape, F>;
+            #[inline]
+            fn add(self, rhs: $rhs) -> Self::Output {
+                (*self).add(rhs)
+            }
+        }
+    };
+}
+
+impl_add_ref!(for &Variable<'tape, F>, rhs: &Variable<'tape, F>, deref_rhs);
+impl_add_ref!(for &Variable<'tape, F>, rhs: Variable<'tape, F>, no_deref_rhs);
+impl_add_ref!(for &Variable<'tape, F>, rhs: &mut Variable<'tape, F>, deref_rhs);
+
+impl_add_ref!(for &mut Variable<'tape, F>, rhs: Variable<'tape, F>, no_deref_rhs);
+impl_add_ref!(for &mut Variable<'tape, F>, rhs: &Variable<'tape, F>, deref_rhs);
+impl_add_ref!(for &mut Variable<'tape, F>, rhs: &mut Variable<'tape, F>, deref_rhs);
 
 #[cfg(test)]
 mod tests {
