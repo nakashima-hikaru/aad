@@ -44,29 +44,28 @@ impl<F: Copy> Variable<'_, F> {
             value: F,
             rhs: Variable<'a, F>,
             dfdx: fn(F, F) -> (F, F),
-            i: usize,
-            j: usize,
+            idx: [usize; 2],
             tape: &'a Tape<F>,
         ) -> (usize, &'a Tape<F>) {
             let operations = &mut tape.operations.borrow_mut();
             let count = (*operations).len();
             let df = dfdx(value, rhs.value);
-            (*operations).push(OperationRecord([(i, df.0), (j, df.1)]));
+            (*operations).push(OperationRecord([(idx[0], df.0), (idx[1], df.1)]));
             (count, tape)
         }
         let value = f(self.value, rhs.value);
         match (self.index, rhs.index) {
             (Some((i, tape)), Some((j, _))) => Variable {
-                index: Some(create_index(self.value, rhs, dfdx, i, j, tape)),
+                index: Some(create_index(self.value, rhs, dfdx, [i, j], tape)),
                 value,
             },
             (None, None) => Variable { index: None, value },
             (None, Some((j, tape))) => Variable {
-                index: Some(create_index(self.value, rhs, dfdx, usize::MAX, j, tape)),
+                index: Some(create_index(self.value, rhs, dfdx, [usize::MAX, j], tape)),
                 value,
             },
             (Some((i, tape)), None) => Variable {
-                index: Some(create_index(self.value, rhs, dfdx, i, usize::MAX, tape)),
+                index: Some(create_index(self.value, rhs, dfdx, [i, usize::MAX], tape)),
                 value,
             },
         }
