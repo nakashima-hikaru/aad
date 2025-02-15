@@ -134,8 +134,8 @@ impl<F: Float> Variable<'_, F> {
     #[must_use]
     pub fn cbrt(self) -> Self {
         self.apply_unary_function(F::cbrt, |x| {
-            x.powf(-(F::one() + F::one()) / (F::one() + F::one() + F::one()))
-                / (F::one() + F::one() + F::one())
+            x.powf(-(F::from(2).unwrap() / F::from(3).unwrap()))
+                / F::from(3).unwrap()
         })
     }
 
@@ -162,19 +162,8 @@ impl<F: Float> Variable<'_, F> {
     pub fn log10(self) -> Self {
         self.apply_unary_function(F::log10, |x| {
             x.recip()
-                * F::ln(
-                    F::one()
-                        + F::one()
-                        + F::one()
-                        + F::one()
-                        + F::one()
-                        + F::one()
-                        + F::one()
-                        + F::one()
-                        + F::one()
-                        + F::one(),
-                )
-                .recip()
+                * F::ln(F::from(10).unwrap())
+                    .recip()
         })
     }
 
