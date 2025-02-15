@@ -87,13 +87,12 @@ impl<F: Sub<F, Output = F> + One + Neg<Output = F>> Sub<Self> for Variable<'_, F
     fn sub(self, rhs: Self) -> Self::Output {
         #[inline]
         fn create_index<F: Sub<F, Output = F> + One + Neg<Output = F>>(
-            i: usize,
-            j: usize,
+            idx: [usize; 2],
             tape: &Tape<F>,
         ) -> (usize, &Tape<F>) {
             let operations = &mut tape.operations.borrow_mut();
             let count = (*operations).len();
-            (*operations).push(OperationRecord([(i, F::one()), (j, -F::one())]));
+            (*operations).push(OperationRecord([(idx[0], F::one()), (idx[1], -F::one())]));
             (count, tape)
         }
 
@@ -101,16 +100,16 @@ impl<F: Sub<F, Output = F> + One + Neg<Output = F>> Sub<Self> for Variable<'_, F
 
         match (self.index, rhs.index) {
             (Some((i, tape)), Some((j, _))) => Variable {
-                index: Some(create_index(i, j, tape)),
+                index: Some(create_index([i, j], tape)),
                 value,
             },
             (None, None) => Variable { index: None, value },
             (None, Some((j, tape))) => Variable {
-                index: Some(create_index(usize::MAX, j, tape)),
+                index: Some(create_index([usize::MAX, j], tape)),
                 value,
             },
             (Some((i, tape)), None) => Variable {
-                index: Some(create_index(i, usize::MAX, tape)),
+                index: Some(create_index([i, usize::MAX], tape)),
                 value,
             },
         }
@@ -146,13 +145,12 @@ impl<F: Mul<F, Output = F> + Copy> Mul<Self> for Variable<'_, F> {
         fn create_index<F: Mul<F, Output = F> + Copy>(
             value: F,
             rhs: F,
-            i: usize,
-            j: usize,
+            idx: [usize; 2],
             tape: &Tape<F>,
         ) -> (usize, &Tape<F>) {
             let operations = &mut tape.operations.borrow_mut();
             let count = (*operations).len();
-            (*operations).push(OperationRecord([(i, rhs), (j, value)]));
+            (*operations).push(OperationRecord([(idx[0], rhs), (idx[1], value)]));
             (count, tape)
         }
 
@@ -160,16 +158,16 @@ impl<F: Mul<F, Output = F> + Copy> Mul<Self> for Variable<'_, F> {
 
         match (self.index, rhs.index) {
             (Some((i, tape)), Some((j, _))) => Variable {
-                index: Some(create_index(self.value, rhs.value, i, j, tape)),
+                index: Some(create_index(self.value, rhs.value, [i, j], tape)),
                 value,
             },
             (None, None) => Variable { index: None, value },
             (None, Some((j, tape))) => Variable {
-                index: Some(create_index(self.value, rhs.value, usize::MAX, j, tape)),
+                index: Some(create_index(self.value, rhs.value, [usize::MAX, j], tape)),
                 value,
             },
             (Some((i, tape)), None) => Variable {
-                index: Some(create_index(self.value, rhs.value, i, usize::MAX, tape)),
+                index: Some(create_index(self.value, rhs.value, [i, usize::MAX], tape)),
                 value,
             },
         }
