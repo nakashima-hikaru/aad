@@ -13,7 +13,7 @@ pub use variable::Variable;
 
 #[cfg(test)]
 mod tests {
-    use crate::Tape;
+    use crate::{FloatLike as _, Tape};
 
     #[test]
     fn test_add() {
@@ -264,7 +264,7 @@ mod tests {
     fn test_powf() {
         let tape = Tape::default();
         let x = tape.create_variable(2.0);
-        let z = x.powf(3.0);
+        let z = x.powf(3.0.into());
         assert!((z.value() - 8.0_f64).abs() < EPSILON);
 
         let grads = z.compute_gradients();
@@ -362,7 +362,7 @@ mod tests {
         let x = tape.create_variable(1.0);
         let y = tape.create_variable(2.0);
 
-        let z = (x + y).powf(3.0) * x.exp();
+        let z = (x + y).powf(3.0.into()) * x.exp();
 
         let expected = (1.0_f64 + 2.0_f64).powf(3.0) * f64::exp(1.0);
 

@@ -1,4 +1,5 @@
 use aad::tape::Tape;
+use aad::FloatLike;
 use aad_derive::autodiff;
 use criterion::{criterion_group, criterion_main, Criterion};
 use std::hint::black_box;

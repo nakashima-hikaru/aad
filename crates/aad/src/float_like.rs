@@ -1,5 +1,4 @@
-use crate::Variable;
-use num_traits::{Float, One, Zero};
+use num_traits::{One, Zero};
 use std::{
     iter::Sum,
     ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign},
@@ -58,7 +57,6 @@ pub trait FloatLike<Scalar>:
     + PartialEq
     + PartialEq<Scalar>
     + std::fmt::Debug
-    + Into<Scalar>
     + From<Scalar>
 {
     #[must_use]
@@ -87,7 +85,7 @@ pub trait FloatLike<Scalar>:
     #[must_use]
     fn exp2(self) -> Self;
     #[must_use]
-    fn powf(self, exponent: Scalar) -> Self;
+    fn powf(self, exponent: Self) -> Self;
     #[must_use]
     fn powi(self, exponent: i32) -> Self;
 
@@ -121,10 +119,8 @@ pub trait FloatLike<Scalar>:
 }
 
 macro_rules! impl_scalar_like_inner {
-    ($primitive:ty, $target:ty; $($where_clause:tt)*) => {
-        impl FloatLike<$primitive> for $target
-        $($where_clause)*
-        {
+    ($primitive:ty) => {
+        impl FloatLike<$primitive> for $primitive {
             impl_math_fn!(sin);
             impl_math_fn!(cos);
             impl_math_fn!(tan);
@@ -138,7 +134,7 @@ macro_rules! impl_scalar_like_inner {
             impl_math_fn!(exp);
             impl_math_fn!(exp2);
             impl_math_fn!(powi, i32);
-            impl_math_fn!(powf, $primitive);
+            impl_math_fn!(powf, Self);
             impl_math_fn!(sqrt);
             impl_math_fn!(cbrt);
             impl_math_fn!(recip);
@@ -155,22 +151,5 @@ macro_rules! impl_scalar_like_inner {
     };
 }
 
-macro_rules! impl_scalar_like {
-    ($primitive:ty) => {
-        impl From<Variable<'_, $primitive>> for $primitive {
-            #[inline]
-            fn from(variable: Variable<'_, $primitive>) -> Self {
-                variable.value
-            }
-        }
-        impl_scalar_like_inner!($primitive, $primitive; );
-        impl_scalar_like_inner!(
-            $primitive,
-            Variable<'_, $primitive>;
-            where $primitive: Float
-        );
-    };
-}
-
-impl_scalar_like!(f32);
-impl_scalar_like!(f64);
+impl_scalar_like_inner!(f32);
+impl_scalar_like_inner!(f64);
