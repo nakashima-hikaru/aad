@@ -1,4 +1,7 @@
-use std::{cmp::Ordering, ops::Add};
+use std::{
+    cmp::Ordering,
+    ops::{Add, Mul},
+};
 
 use crate::gradients::Gradients;
 use crate::operation_record::OperationRecord;
@@ -38,7 +41,7 @@ impl<F: Copy> Variable<'_, F> {
     }
     #[inline]
     #[must_use]
-    pub fn apply_binary_function(self, rhs: Self, f: BinaryFn<F>, dfdx: BinaryPairFn<F>) -> Self {
+    pub fn apply_binary_function(&self, rhs: &Self, f: BinaryFn<F>, dfdx: BinaryPairFn<F>) -> Self {
         #[inline]
         fn create_index<'a, F>(
             value: F,
@@ -56,16 +59,16 @@ impl<F: Copy> Variable<'_, F> {
         let value = f(self.value, rhs.value);
         match (self.index, rhs.index) {
             (Some((i, tape)), Some((j, _))) => Variable {
-                index: Some(create_index(self.value, rhs, dfdx, [i, j], tape)),
+                index: Some(create_index(self.value, *rhs, dfdx, [i, j], tape)),
                 value,
             },
             (None, None) => Variable { index: None, value },
             (None, Some((j, tape))) => Variable {
-                index: Some(create_index(self.value, rhs, dfdx, [usize::MAX, j], tape)),
+                index: Some(create_index(self.value, *rhs, dfdx, [usize::MAX, j], tape)),
                 value,
             },
             (Some((i, tape)), None) => Variable {
-                index: Some(create_index(self.value, rhs, dfdx, [i, usize::MAX], tape)),
+                index: Some(create_index(self.value, *rhs, dfdx, [i, usize::MAX], tape)),
                 value,
             },
         }
@@ -75,7 +78,7 @@ impl<F: Copy> Variable<'_, F> {
 impl<F: Copy + Zero> Variable<'_, F> {
     #[inline]
     #[must_use]
-    pub fn apply_unary_function(self, f: UnaryFn<F>, df: UnaryFn<F>) -> Self {
+    pub fn apply_unary_function(&self, f: UnaryFn<F>, df: UnaryFn<F>) -> Self {
         let value = f(self.value);
         match self.index {
             Some((i, tape)) => Variable {
@@ -97,7 +100,7 @@ impl<F: Copy + Zero> Variable<'_, F> {
     #[inline]
     #[must_use]
     pub fn apply_scalar_function<T: Copy>(
-        self,
+        &self,
         f: BinaryFn<F, T>,
         df: BinaryFn<F, T>,
         scalar: T,
@@ -135,11 +138,11 @@ impl<F: Copy + One + Zero> Variable<'_, F> {
                 continue;
             }
             for j in 0..2 {
-                let (idx0, idx1) = operation.0[j];
-                if idx0 == usize::MAX {
+                let (idx, val) = operation.0[j];
+                if idx == usize::MAX {
                     continue;
                 }
-                grads[idx0] = grads[idx0] + idx1 * grad;
+                grads[idx] = grads[idx] + val * grad;
             }
         }
 
@@ -175,8 +178,9 @@ impl<F: PartialEq<F>> PartialEq<F> for Variable<'_, F> {
     }
 }
 
-impl<F: Zero + Copy> Zero for Variable<'_, F>
-where Self: Add<Self, Output = Self>
+impl<F: Zero> Zero for Variable<'_, F>
+where
+    Self: Add<Self, Output = Self>,
 {
     #[inline]
     #[must_use]
@@ -195,7 +199,10 @@ where Self: Add<Self, Output = Self>
     }
 }
 
-impl<F: One + Copy> One for Variable<'_, F> {
+impl<F: One> One for Variable<'_, F>
+where
+    Self: Mul<Self, Output = Self>,
+{
     #[inline]
     #[must_use]
     fn one() -> Self {

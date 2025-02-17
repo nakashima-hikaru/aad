@@ -1,12 +1,12 @@
 use crate::operation_record::OperationRecord;
 use crate::variable::Variable;
 use crate::Tape;
-use num_traits::{Float, Inv, One, Zero};
+use num_traits::{Inv, One, Zero};
 use std::iter::Sum;
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 
-impl<F: Neg<Output = F> + One + Zero> Neg for Variable<'_, F> {
-    type Output = Self;
+impl<'a, F: Neg<Output = F> + One + Zero + Copy> Neg for &Variable<'a, F> {
+    type Output = Variable<'a, F>;
     #[inline]
     fn neg(self) -> Self::Output {
         let value = self.value.neg();
@@ -28,24 +28,19 @@ impl<F: Neg<Output = F> + One + Zero> Neg for Variable<'_, F> {
     }
 }
 
-impl<'tape, F: Neg<Output = F> + One + Zero + Copy> Neg for &Variable<'tape, F> {
-    type Output = Variable<'tape, F>;
+impl<'a, F> Neg for Variable<'a, F>
+where
+    for<'b> &'b Variable<'a, F>: Neg<Output = Variable<'a, F>>,
+{
+    type Output = Variable<'a, F>;
     #[inline]
     fn neg(self) -> Self::Output {
-        (*self).neg()
+        (&self).neg()
     }
 }
 
-impl<'tape, F: Neg<Output = F> + One + Zero + Copy> Neg for &mut Variable<'tape, F> {
-    type Output = Variable<'tape, F>;
-    #[inline]
-    fn neg(self) -> Self::Output {
-        (*self).neg()
-    }
-}
-
-impl<F: Add<F, Output = F> + One> Add<Self> for Variable<'_, F> {
-    type Output = Self;
+impl<'a, F: Add<F, Output = F> + One + Copy> Add<Self> for &Variable<'a, F> {
+    type Output = Variable<'a, F>;
 
     #[inline]
     fn add(self, rhs: Self) -> Self::Output {
@@ -80,8 +75,44 @@ impl<F: Add<F, Output = F> + One> Add<Self> for Variable<'_, F> {
     }
 }
 
-impl<F: Sub<F, Output = F> + One + Neg<Output = F>> Sub<Self> for Variable<'_, F> {
+impl<'a, F> Add<Self> for Variable<'a, F>
+where
+    for<'b> &'b Variable<'a, F>: Add<&'b Variable<'a, F>, Output = Variable<'a, F>>,
+{
     type Output = Self;
+
+    #[inline]
+    fn add(self, rhs: Self) -> Self::Output {
+        (&self).add(&rhs)
+    }
+}
+
+impl<'a, F> Add<Variable<'a, F>> for &Variable<'a, F>
+where
+    for<'b> &'b Variable<'a, F>: Add<&'b Variable<'a, F>, Output = Variable<'a, F>>,
+{
+    type Output = Variable<'a, F>;
+
+    #[inline]
+    fn add(self, rhs: Variable<'a, F>) -> Self::Output {
+        self.add(&rhs)
+    }
+}
+
+impl<'a, F> Add<&Variable<'a, F>> for Variable<'a, F>
+where
+    for<'b> &'b Variable<'a, F>: Add<&'b Variable<'a, F>, Output = Variable<'a, F>>,
+{
+    type Output = Variable<'a, F>;
+
+    #[inline]
+    fn add(self, rhs: &Variable<'a, F>) -> Self::Output {
+        (&self).add(rhs)
+    }
+}
+
+impl<'a, F: Sub<F, Output = F> + One + Neg<Output = F> + Copy> Sub<Self> for &Variable<'a, F> {
+    type Output = Variable<'a, F>;
 
     #[inline]
     fn sub(self, rhs: Self) -> Self::Output {
@@ -92,7 +123,10 @@ impl<F: Sub<F, Output = F> + One + Neg<Output = F>> Sub<Self> for Variable<'_, F
         ) -> (usize, &Tape<F>) {
             let operations = &mut tape.operations.borrow_mut();
             let count = (*operations).len();
-            (*operations).push(OperationRecord([(idx[0], F::one()), (idx[1], -F::one())]));
+            (*operations).push(OperationRecord([
+                (idx[0], F::one()),
+                (idx[1], F::one().neg()),
+            ]));
             (count, tape)
         }
 
@@ -116,28 +150,43 @@ impl<F: Sub<F, Output = F> + One + Neg<Output = F>> Sub<Self> for Variable<'_, F
     }
 }
 
-impl<'tape, F: Sub<F, Output = F> + One + Neg<Output = F> + Copy> Sub<Self>
-    for &Variable<'tape, F>
+impl<'a, F> Sub<Self> for Variable<'a, F>
+where
+    for<'b> &'b Variable<'a, F>: Sub<&'b Variable<'a, F>, Output = Variable<'a, F>>,
 {
-    type Output = Variable<'tape, F>;
+    type Output = Variable<'a, F>;
     #[inline]
     fn sub(self, rhs: Self) -> Self::Output {
-        (*self).sub(*rhs)
+        (&self).sub(&rhs)
     }
 }
 
-impl<'tape, F: Sub<F, Output = F> + One + Neg<Output = F> + Copy> Sub<Variable<'tape, F>>
-    for &Variable<'tape, F>
+impl<'a, F> Sub<Variable<'a, F>> for &Variable<'a, F>
+where
+    for<'b> &'b Variable<'a, F>: Sub<&'b Variable<'a, F>, Output = Variable<'a, F>>,
 {
-    type Output = Variable<'tape, F>;
+    type Output = Variable<'a, F>;
+
     #[inline]
-    fn sub(self, rhs: Variable<'tape, F>) -> Self::Output {
-        (*self).sub(rhs)
+    fn sub(self, rhs: Variable<'a, F>) -> Self::Output {
+        self.sub(&rhs)
     }
 }
 
-impl<F: Mul<F, Output = F> + Copy> Mul<Self> for Variable<'_, F> {
-    type Output = Self;
+impl<'a, F> Sub<&Variable<'a, F>> for Variable<'a, F>
+where
+    for<'b> &'b Variable<'a, F>: Sub<&'b Variable<'a, F>, Output = Variable<'a, F>>,
+{
+    type Output = Variable<'a, F>;
+
+    #[inline]
+    fn sub(self, rhs: &Variable<'a, F>) -> Self::Output {
+        (&self).sub(rhs)
+    }
+}
+
+impl<'a, F: Mul<F, Output = F> + Copy> Mul<Self> for &Variable<'a, F> {
+    type Output = Variable<'a, F>;
 
     #[inline]
     fn mul(self, rhs: Self) -> Self::Output {
@@ -174,26 +223,44 @@ impl<F: Mul<F, Output = F> + Copy> Mul<Self> for Variable<'_, F> {
     }
 }
 
-impl<'tape, F: Mul<F, Output = F> + Copy> Mul<Self> for &Variable<'tape, F> {
-    type Output = Variable<'tape, F>;
+impl<'a, F> Mul<Self> for Variable<'a, F>
+where
+    for<'b> &'b Variable<'a, F>: Mul<&'b Variable<'a, F>, Output = Variable<'a, F>>,
+{
+    type Output = Variable<'a, F>;
     #[inline]
     fn mul(self, rhs: Self) -> Self::Output {
-        (*self).mul(*rhs)
+        (&self).mul(&rhs)
     }
 }
 
-impl<'tape, F: Mul<F, Output = F> + Copy> Mul<Variable<'tape, F>> for &Variable<'tape, F> {
-    type Output = Variable<'tape, F>;
-    #[inline]
-    fn mul(self, rhs: Variable<'tape, F>) -> Self::Output {
-        (*self).mul(rhs)
-    }
-}
-
-impl<F: Copy + Div<F, Output = F> + Inv<Output = F> + Neg<Output = F> + Mul<Output = F>> Div<Self>
-    for Variable<'_, F>
+impl<'a, F> Mul<Variable<'a, F>> for &Variable<'a, F>
+where
+    for<'b> &'b Variable<'a, F>: Mul<&'b Variable<'a, F>, Output = Variable<'a, F>>,
 {
-    type Output = Self;
+    type Output = Variable<'a, F>;
+    #[inline]
+    fn mul(self, rhs: Variable<'a, F>) -> Self::Output {
+        self.mul(&rhs)
+    }
+}
+
+impl<'a, F> Mul<&Variable<'a, F>> for Variable<'a, F>
+where
+    for<'b> &'b Variable<'a, F>: Mul<&'b Variable<'a, F>, Output = Variable<'a, F>>,
+{
+    type Output = Variable<'a, F>;
+
+    #[inline]
+    fn mul(self, rhs: &Variable<'a, F>) -> Self::Output {
+        (&self).mul(rhs)
+    }
+}
+
+impl<'a, F: Copy + Div<F, Output = F> + Inv<Output = F> + Neg<Output = F> + Mul<Output = F>>
+    Div<Self> for &Variable<'a, F>
+{
+    type Output = Variable<'a, F>;
 
     #[inline]
     fn div(self, rhs: Self) -> Self::Output {
@@ -201,142 +268,139 @@ impl<F: Copy + Div<F, Output = F> + Inv<Output = F> + Neg<Output = F> + Mul<Outp
     }
 }
 
-impl<'tape, F: Copy + Div<F, Output = F> + Inv<Output = F> + Neg<Output = F> + Mul<Output = F>>
-    Div<Self> for &Variable<'tape, F>
+impl<'a, F: Copy + Div<F, Output = F> + Inv<Output = F> + Neg<Output = F> + Mul<Output = F>>
+    Div<Self> for Variable<'a, F>
 {
-    type Output = Variable<'tape, F>;
+    type Output = Variable<'a, F>;
+
     #[inline]
     fn div(self, rhs: Self) -> Self::Output {
-        (*self).div(*rhs)
+        (&self).div(&rhs)
     }
 }
 
-impl<'tape, F: Copy + Div<F, Output = F> + Inv<Output = F> + Neg<Output = F> + Mul<Output = F>>
-    Div<Variable<'tape, F>> for &Variable<'tape, F>
+impl<'a, F: Copy + Div<F, Output = F> + Inv<Output = F> + Neg<Output = F> + Mul<Output = F>>
+    Div<&Variable<'a, F>> for Variable<'a, F>
 {
-    type Output = Variable<'tape, F>;
+    type Output = Variable<'a, F>;
+
     #[inline]
-    fn div(self, rhs: Variable<'tape, F>) -> Self::Output {
-        (*self).div(rhs)
+    fn div(self, rhs: &Variable<'a, F>) -> Self::Output {
+        (&self).div(rhs)
     }
 }
 
-impl<F: Copy + One + Zero> AddAssign<Self> for Variable<'_, F> {
+impl<'a, F: Copy + Div<F, Output = F> + Inv<Output = F> + Neg<Output = F> + Mul<Output = F>>
+    Div<Variable<'a, F>> for &Variable<'a, F>
+{
+    type Output = Variable<'a, F>;
+
+    #[inline]
+    fn div(self, rhs: Variable<'a, F>) -> Self::Output {
+        self.div(&rhs)
+    }
+}
+
+impl<'a, F> AddAssign<Self> for Variable<'a, F>
+where
+    for<'b> &'b Variable<'a, F>: Add<&'b Variable<'a, F>, Output = Variable<'a, F>>,
+{
     #[inline]
     fn add_assign(&mut self, rhs: Self) {
-        *self = *self + rhs;
+        *self = &*self + &rhs;
     }
 }
 
-impl<'tape, F: Copy + One + Zero> AddAssign<&Variable<'tape, F>> for Variable<'tape, F> {
-    #[inline]
-    fn add_assign(&mut self, rhs: &Variable<'tape, F>) {
-        *self = *self + *rhs;
-    }
-}
-
-impl<F: Copy + One + Neg<Output = F> + Sub<F, Output = F>> SubAssign<Self> for Variable<'_, F> {
-    #[inline]
-    fn sub_assign(&mut self, rhs: Self) {
-        *self = *self - rhs;
-    }
-}
-
-impl<'tape, F: Copy + One + Neg<Output = F> + Sub<F, Output = F>> SubAssign<&Variable<'tape, F>>
-    for Variable<'tape, F>
+impl<'a, F> AddAssign<&Variable<'a, F>> for Variable<'a, F>
+where
+    for<'b> &'b Variable<'a, F>: Add<&'b Variable<'a, F>, Output = Variable<'a, F>>,
 {
     #[inline]
-    fn sub_assign(&mut self, rhs: &Variable<'tape, F>) {
-        *self = *self - *rhs;
+    fn add_assign(&mut self, rhs: &Variable<'a, F>) {
+        *self = &*self + rhs;
     }
 }
-impl<F: Copy + Mul<F, Output = F>> MulAssign<Self> for Variable<'_, F> {
+
+impl<'a, F> SubAssign<Self> for Variable<'a, F>
+where
+    for<'b> &'b Variable<'a, F>: Sub<&'b Variable<'a, F>, Output = Variable<'a, F>>,
+{
+    #[inline]
+    fn sub_assign(&mut self, rhs: Self) {
+        *self = &*self - &rhs;
+    }
+}
+
+impl<'a, F> SubAssign<&Variable<'a, F>> for Variable<'a, F>
+where
+    for<'b> &'b Variable<'a, F>: Sub<&'b Variable<'a, F>, Output = Variable<'a, F>>,
+{
+    #[inline]
+    fn sub_assign(&mut self, rhs: &Variable<'a, F>) {
+        *self = &*self - rhs;
+    }
+}
+
+impl<'a, F> MulAssign<Self> for Variable<'a, F>
+where
+    for<'b> &'b Variable<'a, F>: Mul<&'b Variable<'a, F>, Output = Variable<'a, F>>,
+{
     #[inline]
     fn mul_assign(&mut self, rhs: Self) {
-        *self = *self * rhs;
+        *self = &*self * &rhs;
     }
 }
 
-impl<'tape, F: Copy + Mul<F, Output = F>> MulAssign<&Variable<'tape, F>> for Variable<'tape, F> {
+impl<'a, F> MulAssign<&Variable<'a, F>> for Variable<'a, F>
+where
+    for<'b> &'b Variable<'a, F>: Mul<&'b Variable<'a, F>, Output = Variable<'a, F>>,
+{
     #[inline]
-    fn mul_assign(&mut self, rhs: &Variable<'tape, F>) {
-        *self = *self * *rhs;
+    fn mul_assign(&mut self, rhs: &Variable<'a, F>) {
+        *self = &*self * rhs;
     }
 }
 
-impl<F: Copy + Div<Self, Output = Self> + Float + Inv<Output = F>> DivAssign<Self>
-    for Variable<'_, F>
+impl<'a, F> DivAssign<Self> for Variable<'a, F>
+where
+    for<'b> &'b Variable<'a, F>: Div<&'b Variable<'a, F>, Output = Variable<'a, F>>,
 {
     #[inline]
     fn div_assign(&mut self, rhs: Self) {
-        *self = *self / rhs;
+        *self = &*self / &rhs;
     }
 }
 
-impl<'tape, F: Copy + Div<Self, Output = Self> + Float + Inv<Output = F>>
-    DivAssign<&Variable<'tape, F>> for Variable<'tape, F>
+impl<'a, F> DivAssign<&Variable<'a, F>> for Variable<'a, F>
+where
+    for<'b> &'b Variable<'a, F>: Div<&'b Variable<'a, F>, Output = Variable<'a, F>>,
 {
     #[inline]
-    fn div_assign(&mut self, rhs: &Variable<'tape, F>) {
-        *self = *self / *rhs;
+    fn div_assign(&mut self, rhs: &Variable<'a, F>) {
+        *self = &*self / rhs;
     }
 }
 
-impl<F: Copy + Zero + Add<F, Output = F> + One> Sum for Variable<'_, F> {
+impl<'a, 'b, F> Sum<&'a Variable<'b, F>> for Variable<'b, F>
+where
+    for<'c> &'c Variable<'b, F>: Add<&'c Variable<'b, F>, Output = Variable<'b, F>>,
+    Variable<'b, F>: Zero,
+{
     #[inline]
-    fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
+    fn sum<I: Iterator<Item = &'a Variable<'b, F>>>(iter: I) -> Self {
+        iter.fold(Variable::zero(), |acc, x| &acc + x)
+    }
+}
+
+impl<'a, F> Sum<Variable<'a, F>> for Variable<'a, F>
+where
+    Variable<'a, F>: Zero,
+{
+    #[inline]
+    fn sum<I: Iterator<Item = Variable<'a, F>>>(iter: I) -> Self {
         iter.fold(Variable::zero(), |acc, x| acc + x)
     }
 }
-
-impl<'tape, 'a, F: Copy + Zero + Add<F, Output = F> + One> Sum<&'a Variable<'tape, F>>
-    for Variable<'tape, F>
-{
-    #[inline]
-    fn sum<I: Iterator<Item = &'a Variable<'tape, F>>>(iter: I) -> Self {
-        iter.fold(Variable::zero(), |acc, x| acc + *x)
-    }
-}
-
-macro_rules! impl_add_ref {
-    (for $lhs:ty, rhs: & $rhs_inner:ty, deref_rhs) => {
-        impl<'tape, F: Add<F, Output = F> + One + Copy> Add<&$rhs_inner> for $lhs {
-            type Output = Variable<'tape, F>;
-            #[inline]
-            fn add(self, rhs: &$rhs_inner) -> Self::Output {
-                (*self).add(*rhs)
-            }
-        }
-    };
-
-    (for $lhs:ty, rhs: &mut $rhs_inner:ty, deref_rhs) => {
-        impl<'tape, F: Add<F, Output = F> + One + Copy> Add<&mut $rhs_inner> for $lhs {
-            type Output = Variable<'tape, F>;
-            #[inline]
-            fn add(self, rhs: &mut $rhs_inner) -> Self::Output {
-                (*self).add(*rhs)
-            }
-        }
-    };
-
-    (for $lhs:ty, rhs: $rhs:ty, no_deref_rhs) => {
-        impl<'tape, F: Add<F, Output = F> + One + Copy> Add<$rhs> for $lhs {
-            type Output = Variable<'tape, F>;
-            #[inline]
-            fn add(self, rhs: $rhs) -> Self::Output {
-                (*self).add(rhs)
-            }
-        }
-    };
-}
-
-impl_add_ref!(for &Variable<'tape, F>, rhs: &Variable<'tape, F>, deref_rhs);
-impl_add_ref!(for &Variable<'tape, F>, rhs: Variable<'tape, F>, no_deref_rhs);
-impl_add_ref!(for &Variable<'tape, F>, rhs: &mut Variable<'tape, F>, deref_rhs);
-
-impl_add_ref!(for &mut Variable<'tape, F>, rhs: Variable<'tape, F>, no_deref_rhs);
-impl_add_ref!(for &mut Variable<'tape, F>, rhs: &Variable<'tape, F>, deref_rhs);
-impl_add_ref!(for &mut Variable<'tape, F>, rhs: &mut Variable<'tape, F>, deref_rhs);
 
 #[cfg(test)]
 mod tests {
@@ -349,7 +413,7 @@ mod tests {
         let values = [1.0, 2.0, 3.0];
         let variables = tape.create_variables(&values);
 
-        let sum: Variable<f64> = variables.into_iter().sum();
+        let sum: Variable<f64> = variables.iter().sum();
 
         assert_eq!(sum.value, 6.0);
         assert!(std::ptr::eq(sum.index.unwrap().1, &tape));
@@ -361,7 +425,7 @@ mod tests {
         let values = [];
         let variables = tape.create_variables(&values);
 
-        let sum: Variable<f64> = variables.into_iter().sum();
+        let sum: Variable<f64> = variables.iter().sum();
 
         assert_eq!(sum.value, 0.0);
         assert!(sum.index.is_none());
@@ -373,7 +437,7 @@ mod tests {
         let values = [];
         let variables = tape.create_variables(&values);
 
-        let sum: Variable<f64> = variables.into_iter().sum();
+        let sum: Variable<f64> = variables.iter().sum();
 
         let x = tape.create_variable(5.0);
 

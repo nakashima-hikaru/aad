@@ -134,8 +134,7 @@ impl<F: Float> Variable<'_, F> {
     #[must_use]
     pub fn cbrt(self) -> Self {
         self.apply_unary_function(F::cbrt, |x| {
-            x.powf(-(F::from(2).unwrap() / F::from(3).unwrap()))
-                / F::from(3).unwrap()
+            x.powf(-(F::from(2).unwrap() / F::from(3).unwrap())) / F::from(3).unwrap()
         })
     }
 
@@ -161,16 +160,14 @@ impl<F: Float> Variable<'_, F> {
     #[must_use]
     pub fn log10(self) -> Self {
         self.apply_unary_function(F::log10, |x| {
-            x.recip()
-                * F::ln(F::from(10).unwrap())
-                    .recip()
+            x.recip() * F::ln(F::from(10).unwrap()).recip()
         })
     }
 
     #[inline]
     #[must_use]
     pub fn hypot(self, other: Self) -> Self {
-        self.apply_binary_function(other, F::hypot, |x, y| {
+        self.apply_binary_function(&other, F::hypot, |x, y| {
             let denom = x.hypot(y);
             (x / denom, y / denom)
         })

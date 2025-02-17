@@ -71,8 +71,9 @@ macro_rules! impl_scalar_sub {
             }
         }
 
-        impl<'a, F: Neg<Output = F> + One + Zero + Sub<$scalar, Output = F>> Sub<Variable<'a, F>>
-            for $scalar
+        impl<'a, F> Sub<Variable<'a, F>> for $scalar
+        where
+            Variable<'a, F>: Sub<$scalar, Output = Variable<'a, F>> + Neg<Output = Variable<'a, F>>,
         {
             type Output = Variable<'a, F>;
 
