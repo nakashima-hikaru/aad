@@ -1,4 +1,4 @@
-use std::cmp::Ordering;
+use std::{cmp::Ordering, ops::Add};
 
 use crate::gradients::Gradients;
 use crate::operation_record::OperationRecord;
@@ -175,7 +175,9 @@ impl<F: PartialEq<F>> PartialEq<F> for Variable<'_, F> {
     }
 }
 
-impl<F: Zero + Copy + One> Zero for Variable<'_, F> {
+impl<F: Zero + Copy> Zero for Variable<'_, F>
+where Self: Add<Self, Output = Self>
+{
     #[inline]
     #[must_use]
     fn zero() -> Self {
