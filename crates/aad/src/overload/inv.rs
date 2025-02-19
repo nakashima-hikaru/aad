@@ -11,8 +11,8 @@ impl<'a> Inv for Variable<'a, f32> {
     }
 }
 
-impl<'a> Inv for Variable<'a, f64> {
-    type Output = Variable<'a, f64>;
+impl Inv for Variable<'_, f64> {
+    type Output = Self;
 
     #[inline]
     fn inv(self) -> Self::Output {
@@ -21,7 +21,7 @@ impl<'a> Inv for Variable<'a, f64> {
 }
 
 impl<'a, 'b> Inv for Variable<'a, Variable<'b, f32>> {
-    type Output = Variable<'a, Variable<'b, f32>>;
+    type Output = Self;
 
     #[inline]
     fn inv(self) -> Self::Output {
@@ -30,7 +30,7 @@ impl<'a, 'b> Inv for Variable<'a, Variable<'b, f32>> {
 }
 
 impl<'a, 'b> Inv for Variable<'a, Variable<'b, f64>> {
-    type Output = Variable<'a, Variable<'b, f64>>;
+    type Output = Self;
 
     #[inline]
     fn inv(self) -> Self::Output {
