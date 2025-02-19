@@ -85,7 +85,7 @@ pub trait FloatLike<Scalar>:
     #[must_use]
     fn exp2(self) -> Self;
     #[must_use]
-    fn powf(self, exponent: Self) -> Self;
+    fn powf(self, exponent: Scalar) -> Self;
     #[must_use]
     fn powi(self, exponent: i32) -> Self;
 
@@ -113,9 +113,6 @@ pub trait FloatLike<Scalar>:
 
     #[must_use]
     fn hypot(self, other: Self) -> Self;
-
-    #[must_use]
-    fn mul_add(self, a: Scalar, b: Scalar) -> Self;
 }
 
 macro_rules! impl_scalar_like_inner {
@@ -134,7 +131,7 @@ macro_rules! impl_scalar_like_inner {
             impl_math_fn!(exp);
             impl_math_fn!(exp2);
             impl_math_fn!(powi, i32);
-            impl_math_fn!(powf, Self);
+            impl_math_fn!(powf, $primitive);
             impl_math_fn!(sqrt);
             impl_math_fn!(cbrt);
             impl_math_fn!(recip);
@@ -146,7 +143,6 @@ macro_rules! impl_scalar_like_inner {
             impl_math_fn!(acosh);
             impl_math_fn!(atanh);
             impl_math_fn!(hypot, Self);
-            impl_math_fn!(mul_add, $primitive, $primitive);
         }
     };
 }

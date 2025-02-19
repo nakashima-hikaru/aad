@@ -32,15 +32,30 @@ macro_rules! impl_scalar_add {
             }
         }
 
-        impl<'a> Add<$scalar> for Variable<'a, $scalar>
+        impl<'a, 'b> Add<$scalar> for &Variable<'a, Variable<'b, $scalar>>
         where
-            for<'b> &'b Variable<'a, $scalar>: Add<$scalar, Output = Variable<'a, $scalar>>,
+            for<'c> &'c $scalar: Add<$scalar, Output = $scalar>,
         {
-            type Output = Variable<'a, $scalar>;
+            type Output = Variable<'a, Variable<'b, $scalar>>;
 
             #[inline]
             fn add(self, rhs: $scalar) -> Self::Output {
-                &self + rhs
+                let value = &self.value + rhs;
+                match &self.index {
+                    Some((i, tape)) => Variable {
+                        index: {
+                            let mut operations = tape.operations.borrow_mut();
+                            let count = operations.len();
+                            operations.push(OperationRecord([
+                                (*i, Variable::one()),
+                                (usize::MAX, Variable::zero()),
+                            ]));
+                            Some((count, tape))
+                        },
+                        value,
+                    },
+                    None => Variable { index: None, value },
+                }
             }
         }
 
@@ -53,28 +68,6 @@ macro_rules! impl_scalar_add {
             #[inline]
             fn add(self, rhs: Self::Output) -> Self::Output {
                 &rhs + self
-            }
-        }
-
-        impl<'a, 'b> Add<&'b Variable<'a, $scalar>> for $scalar
-        where
-            for<'c> &'c Variable<'a, $scalar>: Add<$scalar, Output = Variable<'a, $scalar>>,
-        {
-            type Output = Variable<'a, $scalar>;
-
-            #[inline]
-            fn add(self, rhs: &'b Variable<'a, $scalar>) -> Self::Output {
-                rhs + self
-            }
-        }
-
-        impl AddAssign<$scalar> for Variable<'_, $scalar>
-        where
-            for<'a, 'b> &'a Variable<'b, $scalar>: Add<$scalar, Output = Variable<'b, $scalar>>,
-        {
-            #[inline]
-            fn add_assign(&mut self, rhs: $scalar) {
-                *self = &*self + rhs;
             }
         }
     };
@@ -109,18 +102,6 @@ macro_rules! impl_scalar_sub {
             }
         }
 
-        impl<'a> Sub<$scalar> for Variable<'a, $scalar>
-        where
-            for<'b> &'b Variable<'a, $scalar>: Sub<$scalar, Output = Variable<'a, $scalar>>,
-        {
-            type Output = Variable<'a, $scalar>;
-
-            #[inline]
-            fn sub(self, rhs: $scalar) -> Self::Output {
-                &self - rhs
-            }
-        }
-
         impl<'a> Sub<Variable<'a, $scalar>> for $scalar
         where
             for<'b> &'b Variable<'a, $scalar>:
@@ -131,29 +112,6 @@ macro_rules! impl_scalar_sub {
             #[inline]
             fn sub(self, rhs: Self::Output) -> Self::Output {
                 -(&rhs - self)
-            }
-        }
-
-        impl<'a, 'b> Sub<&'b Variable<'a, $scalar>> for $scalar
-        where
-            for<'c> &'c Variable<'a, $scalar>:
-                Sub<$scalar, Output = Variable<'a, $scalar>> + Neg<Output = Variable<'a, $scalar>>,
-        {
-            type Output = Variable<'a, $scalar>;
-
-            #[inline]
-            fn sub(self, rhs: &'b Variable<'a, $scalar>) -> Self::Output {
-                rhs - self
-            }
-        }
-
-        impl SubAssign<$scalar> for Variable<'_, $scalar>
-        where
-            for<'a, 'b> &'a Variable<'b, $scalar>: Sub<$scalar, Output = Variable<'b, $scalar>>,
-        {
-            #[inline]
-            fn sub_assign(&mut self, rhs: $scalar) {
-                *self = &*self - rhs;
             }
         }
     };
@@ -188,18 +146,6 @@ macro_rules! impl_scalar_mul {
             }
         }
 
-        impl<'a> Mul<$scalar> for Variable<'a, $scalar>
-        where
-            for<'b> &'b Variable<'a, $scalar>: Mul<$scalar, Output = Variable<'a, $scalar>>,
-        {
-            type Output = Variable<'a, $scalar>;
-
-            #[inline]
-            fn mul(self, rhs: $scalar) -> Self::Output {
-                &self * rhs
-            }
-        }
-
         impl<'a> Mul<Variable<'a, $scalar>> for $scalar
         where
             for<'b> &'b Variable<'a, $scalar>: Mul<$scalar, Output = Variable<'a, $scalar>>,
@@ -209,28 +155,6 @@ macro_rules! impl_scalar_mul {
             #[inline]
             fn mul(self, rhs: Self::Output) -> Self::Output {
                 &rhs * self
-            }
-        }
-
-        impl<'a, 'b> Mul<&'b Variable<'a, $scalar>> for $scalar
-        where
-            for<'c> &'c Variable<'a, $scalar>: Mul<$scalar, Output = Variable<'a, $scalar>>,
-        {
-            type Output = Variable<'a, $scalar>;
-
-            #[inline]
-            fn mul(self, rhs: &'b Variable<'a, $scalar>) -> Self::Output {
-                rhs * self
-            }
-        }
-
-        impl MulAssign<$scalar> for Variable<'_, $scalar>
-        where
-            for<'a, 'b> &'a Variable<'b, $scalar>: Mul<$scalar, Output = Variable<'b, $scalar>>,
-        {
-            #[inline]
-            fn mul_assign(&mut self, rhs: $scalar) {
-                *self = &*self * rhs;
             }
         }
     };
@@ -265,18 +189,6 @@ macro_rules! impl_scalar_div {
             }
         }
 
-        impl<'a> Div<$scalar> for Variable<'a, $scalar>
-        where
-            for<'b> &'b Variable<'a, $scalar>: Div<$scalar, Output = Variable<'a, $scalar>>,
-        {
-            type Output = Variable<'a, $scalar>;
-
-            #[inline]
-            fn div(self, rhs: $scalar) -> Self::Output {
-                &self / rhs
-            }
-        }
-
         #[allow(clippy::suspicious_arithmetic_impl)]
         impl<'a> Div<Variable<'a, $scalar>> for $scalar
         where
@@ -290,85 +202,85 @@ macro_rules! impl_scalar_div {
                 rhs.inv() * self
             }
         }
+    };
+}
 
-        impl<'a, 'b> Div<&'b Variable<'a, $scalar>> for $scalar
+macro_rules! impl_scalar_ops_float {
+    ($($scalar:ty),*) => {
+        $(
+            impl_scalar_add!($scalar);
+            impl_scalar_sub!($scalar);
+            impl_scalar_mul!($scalar);
+            impl_scalar_div!($scalar);
+        )*
+    };
+}
+
+macro_rules! impl_scalar_ops_int {
+    ($($scalar:ty),*) => {
+        $(
+            impl_scalar_add!($scalar);
+            impl_scalar_sub!($scalar);
+            impl_scalar_mul!($scalar);
+        )*
+    };
+}
+
+impl_scalar_ops_float!(f32, f64);
+impl_scalar_ops_int!(i8, i16, i32, i64, i128, isize, u8, u16, u32, u64, u128, usize);
+
+macro_rules! impl_scalar_op {
+    ($scalar:ty, $trait:ident, $method:ident, $assign_trait:ident, $assign_method:ident, $op:expr) => {
+        impl<'a> $trait<$scalar> for Variable<'a, $scalar>
         where
-            for<'c> &'c Variable<'a, $scalar>: Div<$scalar, Output = Variable<'a, $scalar>>,
+            for<'b> &'b Variable<'a, $scalar>: $trait<$scalar, Output = Variable<'a, $scalar>>,
         {
             type Output = Variable<'a, $scalar>;
 
             #[inline]
-            fn div(self, rhs: &'b Variable<'a, $scalar>) -> Self::Output {
-                rhs / self
+            fn $method(self, rhs: $scalar) -> Self::Output {
+                (&self).$method(rhs)
             }
         }
 
-        impl DivAssign<$scalar> for Variable<'_, $scalar>
+        impl $assign_trait<$scalar> for Variable<'_, $scalar>
         where
-            for<'a, 'b> &'a Variable<'b, $scalar>: Div<$scalar, Output = Variable<'b, $scalar>>,
+            for<'a, 'b> &'a Variable<'b, $scalar>: $trait<$scalar, Output = Variable<'b, $scalar>>,
         {
             #[inline]
-            fn div_assign(&mut self, rhs: $scalar) {
-                *self = &*self / rhs;
+            fn $assign_method(&mut self, rhs: $scalar) {
+                *self = self.$method(rhs);
             }
         }
     };
 }
 
-impl_scalar_add!(f32);
-impl_scalar_sub!(f32);
-impl_scalar_mul!(f32);
-impl_scalar_div!(f32);
+macro_rules! impl_scalar_ops {
+    ($scalar:ty) => {
+        impl_scalar_op!($scalar, Add, add, AddAssign, add_assign, |a, b| a + b);
+        impl_scalar_op!($scalar, Sub, sub, SubAssign, sub_assign, |a, b| a - b);
+        impl_scalar_op!($scalar, Mul, mul, MulAssign, mul_assign, |a, b| a * b);
+    };
+}
 
-impl_scalar_add!(f64);
-impl_scalar_sub!(f64);
-impl_scalar_mul!(f64);
-impl_scalar_div!(f64);
+macro_rules! impl_scalar_ops_float {
+    ($scalar:ty) => {
+        impl_scalar_ops!($scalar);
+        impl_scalar_op!($scalar, Div, div, DivAssign, div_assign, |a, b| a / b);
+    };
+}
 
-impl_scalar_add!(i8);
-impl_scalar_sub!(i8);
-impl_scalar_mul!(i8);
-
-impl_scalar_add!(i16);
-impl_scalar_sub!(i16);
-impl_scalar_mul!(i16);
-
-impl_scalar_add!(i32);
-impl_scalar_sub!(i32);
-impl_scalar_mul!(i32);
-
-impl_scalar_add!(i64);
-impl_scalar_sub!(i64);
-impl_scalar_mul!(i64);
-
-impl_scalar_add!(i128);
-impl_scalar_sub!(i128);
-impl_scalar_mul!(i128);
-
-impl_scalar_add!(isize);
-impl_scalar_sub!(isize);
-impl_scalar_mul!(isize);
-
-impl_scalar_add!(u8);
-impl_scalar_sub!(u8);
-impl_scalar_mul!(u8);
-
-impl_scalar_add!(u16);
-impl_scalar_sub!(u16);
-impl_scalar_mul!(u16);
-
-impl_scalar_add!(u32);
-impl_scalar_sub!(u32);
-impl_scalar_mul!(u32);
-
-impl_scalar_add!(u64);
-impl_scalar_sub!(u64);
-impl_scalar_mul!(u64);
-
-impl_scalar_add!(u128);
-impl_scalar_sub!(u128);
-impl_scalar_mul!(u128);
-
-impl_scalar_add!(usize);
-impl_scalar_sub!(usize);
-impl_scalar_mul!(usize);
+impl_scalar_ops_float!(f32);
+impl_scalar_ops_float!(f64);
+impl_scalar_ops!(i8);
+impl_scalar_ops!(i16);
+impl_scalar_ops!(i32);
+impl_scalar_ops!(i64);
+impl_scalar_ops!(i128);
+impl_scalar_ops!(isize);
+impl_scalar_ops!(u8);
+impl_scalar_ops!(u16);
+impl_scalar_ops!(u32);
+impl_scalar_ops!(u64);
+impl_scalar_ops!(u128);
+impl_scalar_ops!(usize);
