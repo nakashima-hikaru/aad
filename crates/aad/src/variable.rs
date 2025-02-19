@@ -1,7 +1,4 @@
-use std::{
-    cmp::Ordering,
-    ops::{Add, Mul},
-};
+use std::ops::{Add, Mul};
 
 use crate::gradients::Gradients;
 use crate::operation_record::OperationRecord;
@@ -150,31 +147,31 @@ impl<F: Copy + One + Zero> Variable<'_, F> {
     }
 }
 
-impl<F: PartialOrd> PartialOrd for Variable<'_, F> {
+impl<'a> PartialOrd<Variable<'a, f64>> for f64 {
     #[inline]
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        self.value.partial_cmp(&other.value)
+    fn partial_cmp(&self, other: &Variable<'a, f64>) -> Option<std::cmp::Ordering> {
+        self.partial_cmp(&other.value)
     }
 }
 
-impl<F: PartialOrd<F>> PartialOrd<F> for Variable<'_, F> {
+impl<'a> PartialEq<Variable<'a, f64>> for f64 {
     #[inline]
-    fn partial_cmp(&self, other: &F) -> Option<Ordering> {
-        self.value.partial_cmp(other)
+    fn eq(&self, other: &Variable<'a, f64>) -> bool {
+        self == &other.value
     }
 }
 
-impl<F: PartialOrd> PartialEq for Variable<'_, F> {
+impl<'a, 'b> PartialOrd<Variable<'a, Variable<'b, f64>>> for f64 {
     #[inline]
-    fn eq(&self, other: &Self) -> bool {
-        self.value == other.value
+    fn partial_cmp(&self, other: &Variable<'a, Variable<'b, f64>>) -> Option<std::cmp::Ordering> {
+        self.partial_cmp(&other.value)
     }
 }
 
-impl<F: PartialEq<F>> PartialEq<F> for Variable<'_, F> {
+impl<'a, 'b> PartialEq<Variable<'a, Variable<'b, f64>>> for f64 {
     #[inline]
-    fn eq(&self, other: &F) -> bool {
-        self.value == *other
+    fn eq(&self, other: &Variable<'a, Variable<'b, f64>>) -> bool {
+        self == &other.value
     }
 }
 
@@ -231,10 +228,10 @@ impl<'a, F> Variable<'a, F> {
     }
 }
 
-impl<F> From<F> for Variable<'_, F> {
+impl<F: From<f64>> From<f64> for Variable<'_, F> {
     #[inline]
-    fn from(value: F) -> Self {
-        Self::constant(value)
+    fn from(value: f64) -> Self {
+        Self::constant(F::from(value))
     }
 }
 
