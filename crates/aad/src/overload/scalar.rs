@@ -230,7 +230,7 @@ impl_scalar_ops_float!(f32, f64);
 impl_scalar_ops_int!(i8, i16, i32, i64, i128, isize, u8, u16, u32, u64, u128, usize);
 
 macro_rules! impl_scalar_op {
-    ($scalar:ty, $trait:ident, $method:ident, $assign_trait:ident, $assign_method:ident, $op:expr) => {
+    ($scalar:ty, $trait:ident, $method:ident, $assign_trait:ident, $assign_method:ident) => {
         impl<'a> $trait<$scalar> for Variable<'a, $scalar>
         where
             for<'b> &'b Variable<'a, $scalar>: $trait<$scalar, Output = Variable<'a, $scalar>>,
@@ -269,23 +269,22 @@ macro_rules! impl_scalar_op {
 
 macro_rules! impl_scalar_ops_add_sub_mul {
     ($scalar:ty) => {
-        impl_scalar_op!($scalar, Add, add, AddAssign, add_assign, |a, b| a + b);
-        impl_scalar_op!($scalar, Sub, sub, SubAssign, sub_assign, |a, b| a - b);
-        impl_scalar_op!($scalar, Mul, mul, MulAssign, mul_assign, |a, b| a * b);
+        impl_scalar_add_mul!($scalar);
+        impl_scalar_op!($scalar, Sub, sub, SubAssign, sub_assign);
     };
 }
 
 macro_rules! impl_scalar_add_mul {
     ($scalar:ty) => {
-        impl_scalar_op!($scalar, Add, add, AddAssign, add_assign, |a, b| a + b);
-        impl_scalar_op!($scalar, Mul, mul, MulAssign, mul_assign, |a, b| a * b);
+        impl_scalar_op!($scalar, Add, add, AddAssign, add_assign);
+        impl_scalar_op!($scalar, Mul, mul, MulAssign, mul_assign);
     };
 }
 
 macro_rules! impl_scalar_ops_float {
     ($scalar:ty) => {
         impl_scalar_ops_add_sub_mul!($scalar);
-        impl_scalar_op!($scalar, Div, div, DivAssign, div_assign, |a, b| a / b);
+        impl_scalar_op!($scalar, Div, div, DivAssign, div_assign);
     };
 }
 
