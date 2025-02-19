@@ -1,0 +1,39 @@
+use crate::variable::Variable;
+use num_traits::Inv;
+use std::ops::{Mul, Neg};
+
+impl<'a> Inv for Variable<'a, f32> {
+    type Output = Variable<'a, f32>;
+
+    #[inline]
+    fn inv(self) -> Self::Output {
+        self.apply_unary_function(f32::inv, |x| x.mul(x).inv().neg())
+    }
+}
+
+impl<'a> Inv for Variable<'a, f64> {
+    type Output = Variable<'a, f64>;
+
+    #[inline]
+    fn inv(self) -> Self::Output {
+        self.apply_unary_function(f64::inv, |x| x.mul(x).inv().neg())
+    }
+}
+
+impl<'a, 'b> Inv for Variable<'a, Variable<'b, f32>> {
+    type Output = Variable<'a, Variable<'b, f32>>;
+
+    #[inline]
+    fn inv(self) -> Self::Output {
+        self.apply_unary_function(Variable::inv, |x| x.mul(x).inv().neg())
+    }
+}
+
+impl<'a, 'b> Inv for Variable<'a, Variable<'b, f64>> {
+    type Output = Variable<'a, Variable<'b, f64>>;
+
+    #[inline]
+    fn inv(self) -> Self::Output {
+        self.apply_unary_function(Variable::inv, |x| x.mul(x).inv().neg())
+    }
+}
