@@ -147,26 +147,42 @@ impl<F: Copy + One + Zero> Variable<'_, F> {
     }
 }
 
-impl<'a> PartialOrd<Variable<'a, f64>> for f64 {
-    #[inline]
-    fn partial_cmp(&self, other: &Variable<'a, f64>) -> Option<std::cmp::Ordering> {
-        self.partial_cmp(&other.value)
-    }
+macro_rules! impl_partial_ord {
+    ($scalar:ty) => {
+        impl<'a> PartialOrd<Variable<'a, $scalar>> for $scalar {
+            #[inline]
+            fn partial_cmp(&self, other: &Variable<'a, $scalar>) -> Option<std::cmp::Ordering> {
+                self.partial_cmp(&other.value)
+            }
+        }
+
+        impl<'a> PartialEq<Variable<'a, $scalar>> for $scalar {
+            #[inline]
+            fn eq(&self, other: &Variable<'a, $scalar>) -> bool {
+                self == &other.value
+            }
+        }
+    };
 }
 
-impl<'a> PartialEq<Variable<'a, f64>> for f64 {
-    #[inline]
-    fn eq(&self, other: &Variable<'a, f64>) -> bool {
-        self == &other.value
-    }
+impl_partial_ord!(f32);
+impl_partial_ord!(f64);
+
+macro_rules! impl_partial_ord_for_variable {
+    ($scalar:ty) => {
+        impl<'a, 'b> PartialOrd<Variable<'a, Variable<'b, $scalar>>> for $scalar {
+            #[inline]
+            fn partial_cmp(
+                &self,
+                other: &Variable<'a, Variable<'b, $scalar>>,
+            ) -> Option<std::cmp::Ordering> {
+                self.partial_cmp(&other.value)
+            }
+        }
+    };
 }
 
-impl<'a, 'b> PartialOrd<Variable<'a, Variable<'b, f64>>> for f64 {
-    #[inline]
-    fn partial_cmp(&self, other: &Variable<'a, Variable<'b, f64>>) -> Option<std::cmp::Ordering> {
-        self.partial_cmp(&other.value)
-    }
-}
+impl_partial_ord_for_variable!(f64);
 
 impl<'a, 'b> PartialEq<Variable<'a, Variable<'b, f64>>> for f64 {
     #[inline]
@@ -235,6 +251,12 @@ impl<F: From<f64>> From<f64> for Variable<'_, F> {
     }
 }
 
+impl<F: From<f32>> From<f32> for Variable<'_, F> {
+    #[inline]
+    fn from(value: f32) -> Self {
+        Self::constant(F::from(value))
+    }
+}
 #[cfg(test)]
 mod tests {
     use super::*;
