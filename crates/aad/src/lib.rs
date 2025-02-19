@@ -13,7 +13,7 @@ pub use variable::Variable;
 
 #[cfg(test)]
 mod tests {
-    use crate::{FloatLike as _, Tape};
+    use crate::Tape;
 
     #[test]
     fn test_add() {
