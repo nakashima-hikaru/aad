@@ -2,6 +2,15 @@ use crate::{variable::Variable, FloatLike};
 use num_traits::{Inv, One};
 use std::ops::{Div as _, Mul, Neg, Sub as _};
 
+impl<'a> Inv for Variable<'a, f32> {
+    type Output = Variable<'a, f32>;
+
+    #[inline]
+    fn inv(self) -> Self::Output {
+        self.apply_unary_function(f32::inv, |x| x.mul(x).inv().neg())
+    }
+}
+
 impl<'a> Inv for Variable<'a, f64> {
     type Output = Variable<'a, f64>;
 
