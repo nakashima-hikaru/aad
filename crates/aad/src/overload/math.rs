@@ -20,6 +20,24 @@ impl<'a> Inv for Variable<'a, f64> {
     }
 }
 
+impl<'a, 'b> Inv for Variable<'a, Variable<'b, f32>> {
+    type Output = Variable<'a, Variable<'b, f32>>;
+
+    #[inline]
+    fn inv(self) -> Self::Output {
+        self.apply_unary_function(Variable::inv, |x| x.mul(x).inv().neg())
+    }
+}
+
+impl<'a, 'b> Inv for Variable<'a, Variable<'b, f64>> {
+    type Output = Variable<'a, Variable<'b, f64>>;
+
+    #[inline]
+    fn inv(self) -> Self::Output {
+        self.apply_unary_function(Variable::inv, |x| x.mul(x).inv().neg())
+    }
+}
+
 impl FloatLike<f64> for Variable<'_, f64> {
     #[inline]
     #[must_use]
