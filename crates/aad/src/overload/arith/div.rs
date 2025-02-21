@@ -15,25 +15,39 @@ impl<'a, F: Copy + Div<F, Output = F> + Inv<Output = F> + Neg<Output = F> + Mul<
     }
 }
 
-impl<'a, F: Copy + Div<F, Output = F> + Inv<Output = F> + Neg<Output = F> + Mul<Output = F>>
-    Div<Self> for Variable<'a, F>
-{
-    type Output = Variable<'a, F>;
-
-    #[inline]
-    fn div(self, rhs: Self) -> Self::Output {
-        (&self).div(&rhs)
-    }
-}
-
-impl<'a, F: Copy + Div<F, Output = F> + Inv<Output = F> + Neg<Output = F> + Mul<Output = F>>
-    Div<Variable<'a, F>> for &Variable<'a, F>
+impl<'a, F> Div<Variable<'a, F>> for &Variable<'a, F>
+where
+    for<'b> &'b Variable<'a, F>: Div<&'b Variable<'a, F>, Output = Variable<'a, F>>,
 {
     type Output = Variable<'a, F>;
 
     #[inline]
     fn div(self, rhs: Variable<'a, F>) -> Self::Output {
         self.div(&rhs)
+    }
+}
+
+impl<'a, F> Div<&Self> for Variable<'a, F>
+where
+    for<'b> &'b Variable<'a, F>: Div<&'b Variable<'a, F>, Output = Variable<'a, F>>,
+{
+    type Output = Variable<'a, F>;
+
+    #[inline]
+    fn div(self, rhs: &Self) -> Self::Output {
+        (&self).div(rhs)
+    }
+}
+
+impl<'a, F> Div<Self> for Variable<'a, F>
+where
+    for<'b> &'b Variable<'a, F>: Div<&'b Variable<'a, F>, Output = Variable<'a, F>>,
+{
+    type Output = Variable<'a, F>;
+
+    #[inline]
+    fn div(self, rhs: Self) -> Self::Output {
+        (&self).div(&rhs)
     }
 }
 
@@ -47,12 +61,12 @@ where
     }
 }
 
-impl<'a, F> DivAssign<&Variable<'a, F>> for Variable<'a, F>
+impl<'a, F> DivAssign<&Self> for Variable<'a, F>
 where
     for<'b> &'b Variable<'a, F>: Div<&'b Variable<'a, F>, Output = Variable<'a, F>>,
 {
     #[inline]
-    fn div_assign(&mut self, rhs: &Variable<'a, F>) {
+    fn div_assign(&mut self, rhs: &Self) {
         *self = &*self / rhs;
     }
 }

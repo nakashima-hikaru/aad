@@ -40,18 +40,6 @@ impl<'a, F: Add<F, Output = F> + One + Copy> Add<Self> for &Variable<'a, F> {
     }
 }
 
-impl<'a, F> Add<Self> for Variable<'a, F>
-where
-    for<'b> &'b Variable<'a, F>: Add<&'b Variable<'a, F>, Output = Variable<'a, F>>,
-{
-    type Output = Self;
-
-    #[inline]
-    fn add(self, rhs: Self) -> Self::Output {
-        (&self).add(&rhs)
-    }
-}
-
 impl<'a, F> Add<Variable<'a, F>> for &Variable<'a, F>
 where
     for<'b> &'b Variable<'a, F>: Add<&'b Variable<'a, F>, Output = Variable<'a, F>>,
@@ -64,7 +52,19 @@ where
     }
 }
 
-impl<'a, F> Add<&Variable<'a, F>> for Variable<'a, F>
+impl<'a, F> Add<Self> for Variable<'a, F>
+where
+    for<'b> &'b Variable<'a, F>: Add<&'b Variable<'a, F>, Output = Variable<'a, F>>,
+{
+    type Output = Self;
+
+    #[inline]
+    fn add(self, rhs: Self) -> Self::Output {
+        (&self).add(&rhs)
+    }
+}
+
+impl<'a, F> Add<&Self> for Variable<'a, F>
 where
     for<'b> &'b Variable<'a, F>: Add<&'b Variable<'a, F>, Output = Variable<'a, F>>,
 {
@@ -86,12 +86,12 @@ where
     }
 }
 
-impl<'a, F> AddAssign<&Variable<'a, F>> for Variable<'a, F>
+impl<'a, F> AddAssign<&Self> for Variable<'a, F>
 where
     for<'b> &'b Variable<'a, F>: Add<&'b Variable<'a, F>, Output = Variable<'a, F>>,
 {
     #[inline]
-    fn add_assign(&mut self, rhs: &Variable<'a, F>) {
+    fn add_assign(&mut self, rhs: &Self) {
         *self = &*self + rhs;
     }
 }

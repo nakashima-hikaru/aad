@@ -43,17 +43,6 @@ impl<'a, F: Sub<F, Output = F> + One + Neg<Output = F> + Copy> Sub<Self> for &Va
     }
 }
 
-impl<'a, F> Sub<Self> for Variable<'a, F>
-where
-    for<'b> &'b Variable<'a, F>: Sub<&'b Variable<'a, F>, Output = Variable<'a, F>>,
-{
-    type Output = Variable<'a, F>;
-    #[inline]
-    fn sub(self, rhs: Self) -> Self::Output {
-        (&self).sub(&rhs)
-    }
-}
-
 impl<'a, F> Sub<Variable<'a, F>> for &Variable<'a, F>
 where
     for<'b> &'b Variable<'a, F>: Sub<&'b Variable<'a, F>, Output = Variable<'a, F>>,
@@ -66,14 +55,25 @@ where
     }
 }
 
-impl<'a, F> Sub<&Variable<'a, F>> for Variable<'a, F>
+impl<'a, F> Sub<Self> for Variable<'a, F>
+where
+    for<'b> &'b Variable<'a, F>: Sub<&'b Variable<'a, F>, Output = Variable<'a, F>>,
+{
+    type Output = Variable<'a, F>;
+    #[inline]
+    fn sub(self, rhs: Self) -> Self::Output {
+        (&self).sub(&rhs)
+    }
+}
+
+impl<'a, F> Sub<&Self> for Variable<'a, F>
 where
     for<'b> &'b Variable<'a, F>: Sub<&'b Variable<'a, F>, Output = Variable<'a, F>>,
 {
     type Output = Variable<'a, F>;
 
     #[inline]
-    fn sub(self, rhs: &Variable<'a, F>) -> Self::Output {
+    fn sub(self, rhs: &Self) -> Self::Output {
         (&self).sub(rhs)
     }
 }
@@ -88,12 +88,12 @@ where
     }
 }
 
-impl<'a, F> SubAssign<&Variable<'a, F>> for Variable<'a, F>
+impl<'a, F> SubAssign<&Self> for Variable<'a, F>
 where
     for<'b> &'b Variable<'a, F>: Sub<&'b Variable<'a, F>, Output = Variable<'a, F>>,
 {
     #[inline]
-    fn sub_assign(&mut self, rhs: &Variable<'a, F>) {
+    fn sub_assign(&mut self, rhs: &Self) {
         *self = &*self - rhs;
     }
 }

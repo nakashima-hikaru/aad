@@ -1,18 +1,7 @@
 use crate::variable::Variable;
-use num_traits::{Inv, Zero};
+use num_traits::Zero;
 use std::iter::Sum;
-use std::ops::{Add, Div, Mul, Neg};
-
-impl<'a, F: Copy + Div<F, Output = F> + Inv<Output = F> + Neg<Output = F> + Mul<Output = F>>
-    Div<&Variable<'a, F>> for Variable<'a, F>
-{
-    type Output = Variable<'a, F>;
-
-    #[inline]
-    fn div(self, rhs: &Variable<'a, F>) -> Self::Output {
-        (&self).div(rhs)
-    }
-}
+use std::ops::Add;
 
 impl<'a, 'b, F> Sum<&'a Variable<'b, F>> for Variable<'b, F>
 where

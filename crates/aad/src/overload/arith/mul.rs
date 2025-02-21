@@ -40,17 +40,6 @@ impl<'a, F: Mul<F, Output = F> + Copy> Mul<Self> for &Variable<'a, F> {
     }
 }
 
-impl<'a, F> Mul<Self> for Variable<'a, F>
-where
-    for<'b> &'b Variable<'a, F>: Mul<&'b Variable<'a, F>, Output = Variable<'a, F>>,
-{
-    type Output = Variable<'a, F>;
-    #[inline]
-    fn mul(self, rhs: Self) -> Self::Output {
-        (&self).mul(&rhs)
-    }
-}
-
 impl<'a, F> Mul<Variable<'a, F>> for &Variable<'a, F>
 where
     for<'b> &'b Variable<'a, F>: Mul<&'b Variable<'a, F>, Output = Variable<'a, F>>,
@@ -62,7 +51,18 @@ where
     }
 }
 
-impl<'a, F> Mul<&Variable<'a, F>> for Variable<'a, F>
+impl<'a, F> Mul<Self> for Variable<'a, F>
+where
+    for<'b> &'b Variable<'a, F>: Mul<&'b Variable<'a, F>, Output = Variable<'a, F>>,
+{
+    type Output = Variable<'a, F>;
+    #[inline]
+    fn mul(self, rhs: Self) -> Self::Output {
+        (&self).mul(&rhs)
+    }
+}
+
+impl<'a, F> Mul<&Self> for Variable<'a, F>
 where
     for<'b> &'b Variable<'a, F>: Mul<&'b Variable<'a, F>, Output = Variable<'a, F>>,
 {
@@ -84,12 +84,12 @@ where
     }
 }
 
-impl<'a, F> MulAssign<&Variable<'a, F>> for Variable<'a, F>
+impl<'a, F> MulAssign<&Self> for Variable<'a, F>
 where
     for<'b> &'b Variable<'a, F>: Mul<&'b Variable<'a, F>, Output = Variable<'a, F>>,
 {
     #[inline]
-    fn mul_assign(&mut self, rhs: &Variable<'a, F>) {
+    fn mul_assign(&mut self, rhs: &Self) {
         *self = &*self * rhs;
     }
 }
