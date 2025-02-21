@@ -55,62 +55,6 @@ impl<F: Copy + Zero> Tape<F> {
     }
 }
 
-impl<F: Debug + Zero + PartialEq> Tape<F> {
-    /// Converts the computation graph to DOT format for visualization.
-    ///
-    /// This method generates a DOT language representation of the computation graph,
-    /// which can be used with tools like Graphviz to create visual diagrams.
-    ///
-    /// # Returns
-    ///
-    /// A string containing the DOT representation of the graph where:
-    /// - Variables (leaf nodes) are shown as green boxes
-    /// - Operations (non-leaf nodes) are shown as circles
-    /// - Edges are labeled with their gradient values
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use aad::tape::Tape;
-    /// let tape = Tape::<f64>::new();
-    /// let x = tape.create_variable(2.0);
-    /// let y = x * x;
-    /// let dot = tape.to_dot();
-    /// // The resulting DOT string can be used with Graphviz
-    /// ```
-    pub fn to_dot(&self) -> String {
-        let operations = self.operations.borrow();
-        let mut nodes = Vec::new();
-        let mut edges = Vec::new();
-
-        for (i, op) in operations.iter().enumerate() {
-            let is_leaf = op.0.iter().all(|(_, grad)| grad.is_zero());
-
-            if is_leaf {
-                nodes.push(format!(
-                    "var{i} [label=\"Variable {i}\\n(index: {i})\", color=green, shape=box];"
-                ));
-            } else {
-                nodes.push(format!("var{i} [label=\"Operation {i}\\n(index: {i})\"];"));
-            }
-
-            if !is_leaf {
-                for (input_idx, grad) in &op.0 {
-                    if !grad.is_zero() {
-                        edges.push(format!("var{input_idx} -> var{i} [label=\"{grad:?}\"];"));
-                    }
-                }
-            }
-        }
-
-        format!(
-            "digraph ComputationGraph {{\n\t{}\n\t{}\n}}",
-            nodes.join("\n\t"),
-            edges.join("\n\t")
-        )
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use crate::tape::Tape;
