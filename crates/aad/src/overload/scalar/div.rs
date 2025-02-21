@@ -84,5 +84,33 @@ macro_rules! impl_scalar_div {
                 rhs.inv() * self
             }
         }
+
+        #[allow(clippy::suspicious_arithmetic_impl)]
+        impl<'a> Div<&Variable<'a, $scalar>> for &$scalar
+        where
+            Variable<'a, $scalar>:
+                Inv<Output = Variable<'a, $scalar>> + Mul<$scalar, Output = Variable<'a, $scalar>>,
+        {
+            type Output = Variable<'a, $scalar>;
+
+            #[inline]
+            fn div(self, rhs: &Variable<'a, $scalar>) -> Self::Output {
+                rhs.inv() * *self
+            }
+        }
+
+        #[allow(clippy::suspicious_arithmetic_impl)]
+        impl<'a, 'b> Div<&Variable<'a, Variable<'b, $scalar>>> for &$scalar
+        where
+            Variable<'a, $scalar>:
+                Inv<Output = Variable<'a, $scalar>> + Mul<$scalar, Output = Variable<'a, $scalar>>,
+        {
+            type Output = Variable<'a, Variable<'b, $scalar>>;
+
+            #[inline]
+            fn div(self, rhs: &Variable<'a, Variable<'b, $scalar>>) -> Self::Output {
+                rhs.inv() * *self
+            }
+        }
     };
 }

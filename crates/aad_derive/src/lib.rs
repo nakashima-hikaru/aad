@@ -1,7 +1,7 @@
 use proc_macro::TokenStream;
 use quote::quote;
 use syn::fold::Fold;
-use syn::{parse_macro_input, parse_quote, spanned::Spanned, Ident, ItemFn};
+use syn::{Ident, ItemFn, parse_macro_input, parse_quote, spanned::Spanned};
 
 struct ReplaceBaseTypeFolder {
     base_type: String,
@@ -90,10 +90,15 @@ pub fn autodiff(_attr: TokenStream, item: TokenStream) -> TokenStream {
 
     let where_clause: ::syn::WhereClause = parse_quote! {
         where
-            #t_ident: ::std::ops::Add<FloatType, Output = FloatType>,
-            #t_ident: ::std::ops::Sub<FloatType, Output = FloatType>,
-            #t_ident: ::std::ops::Mul<FloatType, Output = FloatType>,
-            #t_ident: ::std::ops::Div<FloatType, Output = FloatType>,
+            #t_ident: ::std::ops::Add<FloatType, Output = FloatType>
+            + ::std::ops::Sub<FloatType, Output = FloatType>
+            + ::std::ops::Mul<FloatType, Output = FloatType>
+            + ::std::ops::Div<FloatType, Output = FloatType>,
+            #t_ident: for<'a> ::std::ops::Add<&'a FloatType, Output=FloatType>
+            + for<'a> ::std::ops::Sub<&'a FloatType, Output=FloatType>
+            + for<'a> ::std::ops::Mul<&'a FloatType, Output=FloatType>
+            + for<'a> ::std::ops::Div<&'a FloatType, Output=FloatType>,
+            for<'a> &'a FloatType: ::std::ops::Add<#t_ident, Output = FloatType> + ::std::ops::Sub<#t_ident, Output = FloatType> + ::std::ops::Mul<#t_ident, Output = FloatType> + ::std::ops::Div<#t_ident, Output = FloatType>,
     };
 
     let new_args = sig.inputs.iter().map(|arg| {

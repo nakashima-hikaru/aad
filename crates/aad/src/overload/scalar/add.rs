@@ -62,5 +62,29 @@ macro_rules! impl_scalar_add {
                 rhs + self
             }
         }
+
+        impl<'a> Add<&Variable<'a, $scalar>> for &$scalar
+        where
+            for<'b> &'b Variable<'a, $scalar>: Add<$scalar, Output = Variable<'a, $scalar>>,
+        {
+            type Output = Variable<'a, $scalar>;
+
+            #[inline]
+            fn add(self, rhs: &Variable<'a, $scalar>) -> Self::Output {
+                rhs + *self
+            }
+        }
+
+        impl<'a, 'b> Add<&Variable<'a, Variable<'b, $scalar>>> for &$scalar
+        where
+            for<'c> &'c Variable<'a, $scalar>: Add<$scalar, Output = Variable<'a, $scalar>>,
+        {
+            type Output = Variable<'a, Variable<'b, $scalar>>;
+
+            #[inline]
+            fn add(self, rhs: &Variable<'a, Variable<'b, $scalar>>) -> Self::Output {
+                rhs + *self
+            }
+        }
     };
 }

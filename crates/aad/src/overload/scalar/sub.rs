@@ -63,5 +63,30 @@ macro_rules! impl_scalar_sub {
                 rhs - self
             }
         }
+
+        impl<'a> Sub<&Variable<'a, $scalar>> for &$scalar
+        where
+            for<'b> &'b $scalar: Sub<$scalar, Output = $scalar>,
+            for<'b> &'b Variable<'a, $scalar>: Neg<Output = Variable<'a, $scalar>>,
+        {
+            type Output = Variable<'a, $scalar>;
+
+            #[inline]
+            fn sub(self, rhs: &Variable<'a, $scalar>) -> Self::Output {
+                -(rhs - *self)
+            }
+        }
+
+        impl<'a, 'b> Sub<&Variable<'a, Variable<'b, $scalar>>> for &$scalar
+        where
+            for<'c> &'c Variable<'a, $scalar>: Sub<$scalar, Output = Variable<'a, $scalar>>,
+        {
+            type Output = Variable<'a, Variable<'b, $scalar>>;
+
+            #[inline]
+            fn sub(self, rhs: &Variable<'a, Variable<'b, $scalar>>) -> Self::Output {
+                rhs - *self
+            }
+        }
     };
 }

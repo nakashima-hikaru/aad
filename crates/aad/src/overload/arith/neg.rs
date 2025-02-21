@@ -2,7 +2,7 @@ use std::ops::Neg;
 
 use num_traits::{One, Zero};
 
-use crate::{operation_record::OperationRecord, Variable};
+use crate::{Variable, operation_record::OperationRecord};
 
 impl<'a, F: Neg<Output = F> + One + Zero + Copy> Neg for &Variable<'a, F> {
     type Output = Variable<'a, F>;

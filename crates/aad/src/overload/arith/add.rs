@@ -2,7 +2,7 @@ use std::ops::{Add, AddAssign};
 
 use num_traits::One;
 
-use crate::{operation_record::OperationRecord, Tape, Variable};
+use crate::{Tape, Variable, operation_record::OperationRecord};
 
 impl<'a, F: Add<F, Output = F> + One + Copy> Add<Self> for &Variable<'a, F> {
     type Output = Variable<'a, F>;

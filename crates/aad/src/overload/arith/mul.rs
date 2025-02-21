@@ -1,6 +1,6 @@
 use std::ops::{Mul, MulAssign};
 
-use crate::{operation_record::OperationRecord, Tape, Variable};
+use crate::{Tape, Variable, operation_record::OperationRecord};
 
 impl<'a, F: Mul<F, Output = F> + Copy> Mul<Self> for &Variable<'a, F> {
     type Output = Variable<'a, F>;

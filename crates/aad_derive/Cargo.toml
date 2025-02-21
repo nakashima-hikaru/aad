@@ -3,7 +3,7 @@ name = "aad_derive"
 version = "0.8.0"
 authors = ["Hikaru Nakashima <nakashima.alg57@gmail.com>"]
 description = "Utility derive macro for aad crate"
-edition = "2021"
+edition = "2024"
 repository = "https://github.com/nakashima-hikaru/aad"
 license-file = "LICENSE"
 

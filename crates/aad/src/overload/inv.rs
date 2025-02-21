@@ -20,7 +20,7 @@ impl Inv for Variable<'_, f64> {
     }
 }
 
-impl<'a, 'b> Inv for Variable<'a, Variable<'b, f32>> {
+impl Inv for Variable<'_, Variable<'_, f32>> {
     type Output = Self;
 
     #[inline]
@@ -29,7 +29,7 @@ impl<'a, 'b> Inv for Variable<'a, Variable<'b, f32>> {
     }
 }
 
-impl<'a, 'b> Inv for Variable<'a, Variable<'b, f64>> {
+impl Inv for Variable<'_, Variable<'_, f64>> {
     type Output = Self;
 
     #[inline]

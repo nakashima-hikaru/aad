@@ -3,7 +3,7 @@ name = "aad"
 version = "0.8.0"
 authors = ["Hikaru Nakashima <nakashima.alg57@gmail.com>"]
 description = "Automatic adjoint differentiation library"
-edition = "2021"
+edition = "2024"
 repository = "https://github.com/nakashima-hikaru/aad"
 license-file = "LICENSE"
 

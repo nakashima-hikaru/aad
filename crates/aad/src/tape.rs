@@ -133,9 +133,5 @@ mod tests {
 
             assert!(std::ptr::eq(variable.index.unwrap().1, &tape));
         }
-
-        // let indices: Vec<_> = variables.iter().map(|var| var.index).collect();
-        // let unique_indices: std::collections::HashSet<_> = indices.iter().copied().collect();
-        // assert_eq!(indices.len(), unique_indices.len());
     }
 }

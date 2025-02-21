@@ -2,7 +2,7 @@ use std::ops::{Neg, Sub, SubAssign};
 
 use num_traits::One;
 
-use crate::{operation_record::OperationRecord, Tape, Variable};
+use crate::{Tape, Variable, operation_record::OperationRecord};
 
 impl<'a, F: Sub<F, Output = F> + One + Neg<Output = F> + Copy> Sub<Self> for &Variable<'a, F> {
     type Output = Variable<'a, F>;

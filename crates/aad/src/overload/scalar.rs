@@ -7,8 +7,8 @@ mod mul;
 #[macro_use]
 mod sub;
 
-use crate::operation_record::OperationRecord;
 use crate::Variable;
+use crate::operation_record::OperationRecord;
 use num_traits::{Inv, One, Zero};
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 
@@ -34,7 +34,9 @@ macro_rules! impl_scalar_ops_int {
 }
 
 impl_scalar_ops_float!(f32, f64);
-impl_scalar_ops_int!(i8, i16, i32, i64, i128, isize, u8, u16, u32, u64, u128, usize);
+impl_scalar_ops_int!(
+    i8, i16, i32, i64, i128, isize, u8, u16, u32, u64, u128, usize
+);
 
 macro_rules! impl_scalar_op {
     ($scalar:ty, $trait:ident, $method:ident, $assign_trait:ident, $assign_method:ident) => {
@@ -47,6 +49,56 @@ macro_rules! impl_scalar_op {
             #[inline]
             fn $method(self, rhs: $scalar) -> Self::Output {
                 (&self).$method(rhs)
+            }
+        }
+
+        impl<'a> $trait<&$scalar> for Variable<'a, $scalar>
+        where
+            for<'b> &'b Variable<'a, $scalar>: $trait<$scalar, Output = Variable<'a, $scalar>>,
+        {
+            type Output = Variable<'a, $scalar>;
+
+            #[inline]
+            fn $method(self, rhs: &$scalar) -> Self::Output {
+                (&self).$method(*rhs)
+            }
+        }
+
+        impl<'a, 'b> $trait<&$scalar> for Variable<'a, Variable<'b, $scalar>>
+        where
+            for<'c> &'c Variable<'a, Variable<'b, $scalar>>:
+                $trait<$scalar, Output = Variable<'a, Variable<'b, $scalar>>>,
+        {
+            type Output = Variable<'a, Variable<'b, $scalar>>;
+
+            #[inline]
+            fn $method(self, rhs: &$scalar) -> Self::Output {
+                (&self).$method(*rhs)
+            }
+        }
+
+        impl<'a> $trait<&$scalar> for &Variable<'a, $scalar>
+        where
+            for<'b> &'b Variable<'a, $scalar>: $trait<$scalar, Output = Variable<'a, $scalar>>,
+        {
+            type Output = Variable<'a, $scalar>;
+
+            #[inline]
+            fn $method(self, rhs: &$scalar) -> Self::Output {
+                (&self).$method(*rhs)
+            }
+        }
+
+        impl<'a, 'b> $trait<&$scalar> for &Variable<'a, Variable<'b, $scalar>>
+        where
+            for<'c> &'c Variable<'a, Variable<'b, $scalar>>:
+                $trait<$scalar, Output = Variable<'a, Variable<'b, $scalar>>>,
+        {
+            type Output = Variable<'a, Variable<'b, $scalar>>;
+
+            #[inline]
+            fn $method(self, rhs: &$scalar) -> Self::Output {
+                (&self).$method(*rhs)
             }
         }
 
@@ -106,6 +158,27 @@ macro_rules! impl_scalar_op {
             #[inline]
             fn $assign_method(&mut self, rhs: $scalar) {
                 *self = self.$method(rhs);
+            }
+        }
+
+        impl $assign_trait<&$scalar> for Variable<'_, $scalar>
+        where
+            for<'a, 'b> &'a Variable<'b, $scalar>: $trait<$scalar, Output = Variable<'b, $scalar>>,
+        {
+            #[inline]
+            fn $assign_method(&mut self, rhs: &$scalar) {
+                *self = self.$method(*rhs);
+            }
+        }
+
+        impl<'b> $assign_trait<&$scalar> for Variable<'_, Variable<'b, $scalar>>
+        where
+            for<'a, 'c> &'a Variable<'c, Variable<'b, $scalar>>:
+                $trait<$scalar, Output = Variable<'c, Variable<'b, $scalar>>>,
+        {
+            #[inline]
+            fn $assign_method(&mut self, rhs: &$scalar) {
+                *self = self.$method(*rhs);
             }
         }
     };

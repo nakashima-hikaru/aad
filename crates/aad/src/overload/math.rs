@@ -1,9 +1,21 @@
-use crate::{variable::Variable, FloatLike};
+use crate::{FloatLike, variable::Variable};
 use num_traits::One;
 use std::{
     cmp::Ordering,
     ops::{Div as _, Mul, Neg, Sub as _},
 };
+
+impl From<Variable<'_, f64>> for f64 {
+    fn from(value: Variable<'_, f64>) -> Self {
+        value.value
+    }
+}
+
+impl From<Variable<'_, Variable<'_, f64>>> for f64 {
+    fn from(value: Variable<'_, Variable<'_, f64>>) -> Self {
+        value.value.value
+    }
+}
 
 impl Variable<'_, f64> {
     #[inline]

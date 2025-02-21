@@ -1,9 +1,9 @@
-use aad::tape::Tape;
-use aad::FloatLike;
-use aad_derive::autodiff;
-use criterion::{criterion_group, criterion_main, Criterion};
-use std::hint::black_box;
 use RustQuant_autodiff::{Accumulate, Graph};
+use aad::FloatLike;
+use aad::tape::Tape;
+use aad_derive::autodiff;
+use criterion::{Criterion, criterion_group, criterion_main};
+use std::hint::black_box;
 
 #[autodiff]
 fn build_calculation_graph(x0: f64, x1: f64, x2: f64, x3: f64, x4: f64) -> f64 {

@@ -80,5 +80,29 @@ macro_rules! impl_scalar_mul {
                 rhs * self
             }
         }
+
+        impl<'a> Mul<&Variable<'a, $scalar>> for &$scalar
+        where
+            for<'b> &'b Variable<'a, $scalar>: Mul<$scalar, Output = Variable<'a, $scalar>>,
+        {
+            type Output = Variable<'a, $scalar>;
+
+            #[inline]
+            fn mul(self, rhs: &Variable<'a, $scalar>) -> Self::Output {
+                rhs * *self
+            }
+        }
+
+        impl<'a, 'b> Mul<&Variable<'a, Variable<'b, $scalar>>> for &$scalar
+        where
+            for<'c> &'c Variable<'a, $scalar>: Mul<$scalar, Output = Variable<'a, $scalar>>,
+        {
+            type Output = Variable<'a, Variable<'b, $scalar>>;
+
+            #[inline]
+            fn mul(self, rhs: &Variable<'a, Variable<'b, $scalar>>) -> Self::Output {
+                rhs * *self
+            }
+        }
     };
 }
