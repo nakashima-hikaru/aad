@@ -125,9 +125,10 @@ impl<F: Copy + One + Zero> Variable<'_, F> {
     #[inline]
     #[must_use]
     pub fn compute_gradients(&self) -> Gradients<F> {
-        let operations = &mut self.index.unwrap().1.operations.borrow_mut();
-        let mut grads = vec![F::zero(); (*operations).len()];
-        grads[self.index.unwrap().0] = F::one();
+        let (var_index, tape) = self.index.unwrap();
+        let operations = &tape.operations.borrow();
+        let mut grads = vec![F::zero(); operations.len()];
+        grads[var_index] = F::one();
 
         for (i, operation) in (*operations).iter().enumerate().rev() {
             let grad = grads[i];
@@ -236,11 +237,11 @@ where
     }
 }
 
-impl<'a, F> Variable<'a, F> {
+impl<'a, F> Variable<'_, F> {
     #[inline]
     #[must_use]
-    pub fn constant(value: F) -> Variable<'a, F> {
-        Variable { index: None, value }
+    pub fn constant(value: F) -> Self {
+        Self { index: None, value }
     }
 }
 

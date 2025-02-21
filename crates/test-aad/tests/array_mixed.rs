@@ -14,7 +14,7 @@ fn main() {
     let z = f(&x, y);
     let grads = z.compute_gradients();
 
-    let dx = grads.get_gradients_vec(&x);
+    let dx = grads.get_gradients_iter(&x).collect::<Vec<_>>();
     assert_eq!(dx, [1.0, 1.0, 1.0]);
     let dy = grads.get_gradient(&y);
     assert_eq!(dy, 1.0);

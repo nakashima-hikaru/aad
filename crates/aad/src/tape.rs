@@ -50,11 +50,8 @@ impl<F: Copy + Zero> Tape<F> {
     }
 
     #[inline]
-    pub fn create_variables_vec(&self, values: &[F]) -> Vec<Variable<F>> {
-        values
-            .iter()
-            .map(|value| self.create_variable(*value))
-            .collect()
+    pub fn create_variables_iter(&self, values: &[F]) -> impl Iterator<Item = Variable<F>> {
+        values.iter().map(|value| self.create_variable(*value))
     }
 }
 
