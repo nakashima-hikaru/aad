@@ -18,7 +18,6 @@ where
     }
 
     #[inline]
-    #[must_use]
     pub fn get_gradients_iter(&self, vars: &[Variable<F>]) -> impl Iterator<Item = F> {
         vars.iter().map(|var| self.get_gradient(var))
     }

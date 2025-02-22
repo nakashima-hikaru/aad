@@ -243,7 +243,7 @@ where
     }
 }
 
-impl<'a, F> Variable<'_, F> {
+impl<F> Variable<'_, F> {
     #[inline]
     #[must_use]
     pub fn constant(value: F) -> Self {
