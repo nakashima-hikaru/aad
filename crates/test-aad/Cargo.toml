@@ -2,6 +2,8 @@
 name = "test-aad"
 version = "0.1.0"
 edition = "2024"
+authors = ["Hikaru Nakashima <nakashima.alg57@gmail.com>"]
+license-file = "../../LICENSE"
 
 [dependencies]
 trybuild = "1.0.103"

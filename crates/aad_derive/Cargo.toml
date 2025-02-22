@@ -5,7 +5,7 @@ authors = ["Hikaru Nakashima <nakashima.alg57@gmail.com>"]
 description = "Utility derive macro for aad crate"
 edition = "2024"
 repository = "https://github.com/nakashima-hikaru/aad"
-license-file = "LICENSE"
+license-file = "../../LICENSE"
 
 [dependencies]
 syn = { version = "2.0", features = ["full", "fold"] }

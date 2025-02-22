@@ -5,7 +5,7 @@ authors = ["Hikaru Nakashima <nakashima.alg57@gmail.com>"]
 description = "Automatic adjoint differentiation library"
 edition = "2024"
 repository = "https://github.com/nakashima-hikaru/aad"
-license-file = "LICENSE"
+license-file = "../../LICENSE"
 
 [features]
 default = []
