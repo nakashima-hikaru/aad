@@ -12,7 +12,7 @@ fn main() {
     let x = tape.create_variables(&[2.0, 3.0, 4.0]);
     let y = tape.create_variable(6.0);
     let z = f(&x, y);
-    let grads = z.compute_gradients();
+    let grads = z.compute_gradients().unwrap();
 
     let dx = grads
         .get_gradients_iter(&x)

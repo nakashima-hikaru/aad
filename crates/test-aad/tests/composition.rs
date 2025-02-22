@@ -16,7 +16,7 @@ fn main() {
     let tape = Tape::default();
     let [x, y, z] = tape.create_variables(&[2.0, 3.0, 4.0]);
     let w = g(x, y, z);
-    let grads = w.compute_gradients();
+    let grads = w.compute_gradients().unwrap();
 
     let [dx, dy, dz] = grads.get_gradients(&[x, y, z]).unwrap();
     assert_eq!(dx, 3.0 * x.value().powi(2) * y.value().sin());

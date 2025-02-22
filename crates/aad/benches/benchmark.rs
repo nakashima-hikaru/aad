@@ -20,7 +20,7 @@ fn large_computation_graph_benchmark_derive(c: &mut Criterion) {
         b.iter(|| {
             let result = build_calculation_graph(x0, x1, x2, x3, x4);
             black_box(result);
-            let grads = result.compute_gradients();
+            let grads = result.compute_gradients().unwrap();
             black_box(grads);
         });
     });
@@ -36,7 +36,7 @@ fn large_computation_graph_benchmark(c: &mut Criterion) {
                 result += (((result + x1) * x2.sin()) + (x3 * x4.ln())) * (x2 + f64::from(i).ln());
             }
             black_box(result);
-            let grads = result.compute_gradients();
+            let grads = result.compute_gradients().unwrap();
             black_box(grads);
         });
     });

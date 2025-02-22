@@ -1,6 +1,6 @@
 use std::ops::{Add, Mul};
 
-use crate::gradients::Gradients;
+use crate::gradients::{GradientError, Gradients};
 use crate::operation_record::OperationRecord;
 use crate::tape::Tape;
 use num_traits::{One, Zero};
@@ -129,9 +129,21 @@ impl<F: Copy + Zero> Variable<'_, F> {
 
 impl<F: Copy + One + Zero> Variable<'_, F> {
     #[inline]
-    #[must_use]
-    pub fn compute_gradients(&self) -> Gradients<F> {
-        let (var_index, tape) = self.index.unwrap();
+    /// Computes gradients for this variable with respect to all variables in the computation graph.
+    ///
+    /// This performs reverse-mode automatic differentiation by traversing the computation graph
+    /// backwards from this variable to compute partial derivatives with respect to all variables.
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(Gradients<F>)` - The computed gradients if successful
+    /// * `Err(GradientError)` - If this variable has no index in the computation graph
+    ///
+    /// # Errors
+    ///
+    /// * Returns `GradientError::MissingIndex` if this variable has no index in the computation graph
+    pub fn compute_gradients(&self) -> Result<Gradients<F>, GradientError> {
+        let (var_index, tape) = self.index.ok_or(GradientError::MissingIndex)?;
         let operations = &tape.operations.borrow();
         let mut grads = vec![F::zero(); operations.len()];
         grads[var_index] = F::one();
@@ -150,7 +162,7 @@ impl<F: Copy + One + Zero> Variable<'_, F> {
             }
         }
 
-        Gradients(grads)
+        Ok(Gradients(grads))
     }
 }
 
@@ -275,10 +287,14 @@ mod tests {
         let [x, y] = tape.create_variables(&[1.0, 2.0]);
         let [x, y] = tape2.create_variables(&[x, y]);
         let z = x * x + y;
-        let grads = z.compute_gradients();
-        let grad = grads.get_gradient(&x).unwrap();
-        let z = grad.compute_gradients();
-        let grad2 = z.get_gradient(&x.value).unwrap();
+        let grads = z.compute_gradients().expect("Failed to compute gradients");
+        let grad = grads.get_gradient(&x).expect("Failed to get gradient");
+        let z = grad
+            .compute_gradients()
+            .expect("Failed to compute second gradients");
+        let grad2 = z
+            .get_gradient(&x.value)
+            .expect("Failed to get second gradient");
         assert_eq!(grad2, 2.0);
     }
 }
