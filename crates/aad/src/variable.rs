@@ -276,9 +276,9 @@ mod tests {
         let [x, y] = tape2.create_variables(&[x, y]);
         let z = x * x + y;
         let grads = z.compute_gradients();
-        let grad = grads.get_gradient(&x);
+        let grad = grads.get_gradient(&x).unwrap();
         let z = grad.compute_gradients();
-        let grad2 = z.get_gradient(&x.value);
+        let grad2 = z.get_gradient(&x.value).unwrap();
         assert_eq!(grad2, 2.0);
     }
 }

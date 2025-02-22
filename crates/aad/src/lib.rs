@@ -25,7 +25,7 @@ mod tests {
         assert_eq!(z.value(), 5.0);
 
         let grads = z.compute_gradients();
-        assert_eq!(grads.get_gradients(&[x, y]), [1.0, 1.0]);
+        assert_eq!(grads.get_gradients(&[x, y]).unwrap(), [1.0, 1.0]);
     }
 
     #[test]
@@ -38,7 +38,7 @@ mod tests {
 
         let grads = z.compute_gradients();
 
-        assert_eq!(grads.get_gradient(&x), 1.0);
+        assert_eq!(grads.get_gradient(&x).unwrap(), 1.0);
     }
 
     #[test]
@@ -51,7 +51,7 @@ mod tests {
 
         let grads = z.compute_gradients();
 
-        assert_eq!(grads.get_gradient(&x), -1.0);
+        assert_eq!(grads.get_gradient(&x).unwrap(), -1.0);
     }
 
     #[test]
@@ -65,8 +65,8 @@ mod tests {
 
         let grads = z.compute_gradients();
 
-        assert_eq!(grads.get_gradient(&x), 1.0);
-        assert_eq!(grads.get_gradient(&y), -1.0);
+        assert_eq!(grads.get_gradient(&x).unwrap(), 1.0);
+        assert_eq!(grads.get_gradient(&y).unwrap(), -1.0);
     }
 
     #[test]
@@ -80,7 +80,7 @@ mod tests {
         let grads = z.compute_gradients();
 
         // 勾配計算: z = x - 4.0 => dz/dx = 1.0
-        assert_eq!(grads.get_gradient(&x), 1.0);
+        assert_eq!(grads.get_gradient(&x).unwrap(), 1.0);
     }
 
     #[test]
@@ -93,7 +93,7 @@ mod tests {
 
         let grads = z.compute_gradients();
 
-        assert_eq!(grads.get_gradient(&x), -1.0);
+        assert_eq!(grads.get_gradient(&x).unwrap(), -1.0);
     }
 
     #[test]
@@ -107,8 +107,8 @@ mod tests {
 
         let grads = z.compute_gradients();
 
-        assert_eq!(grads.get_gradient(&x), 3.0);
-        assert_eq!(grads.get_gradient(&y), 2.0);
+        assert_eq!(grads.get_gradient(&x).unwrap(), 3.0);
+        assert_eq!(grads.get_gradient(&y).unwrap(), 2.0);
     }
 
     #[test]
@@ -121,7 +121,7 @@ mod tests {
 
         let grads = z.compute_gradients();
 
-        assert_eq!(grads.get_gradient(&x), 5.0);
+        assert_eq!(grads.get_gradient(&x).unwrap(), 5.0);
     }
 
     #[test]
@@ -135,8 +135,11 @@ mod tests {
 
         let grads = z.compute_gradients();
 
-        assert_eq!(grads.get_gradient(&x), 1.0 / y.value());
-        assert_eq!(grads.get_gradient(&y), -x.value() / (y.value() * y.value()));
+        assert_eq!(grads.get_gradient(&x).unwrap(), 1.0 / y.value());
+        assert_eq!(
+            grads.get_gradient(&y).unwrap(),
+            -x.value() / (y.value() * y.value())
+        );
     }
 
     #[test]
@@ -149,7 +152,7 @@ mod tests {
 
         let grads = z.compute_gradients();
 
-        assert_eq!(grads.get_gradient(&x), 1.0 / 4.0);
+        assert_eq!(grads.get_gradient(&x).unwrap(), 1.0 / 4.0);
     }
 
     #[test]
@@ -162,7 +165,10 @@ mod tests {
 
         let grads = z.compute_gradients();
 
-        assert_eq!(grads.get_gradient(&x), -10.0 / (x.value() * x.value()));
+        assert_eq!(
+            grads.get_gradient(&x).unwrap(),
+            -10.0 / (x.value() * x.value())
+        );
     }
 
     #[test]
@@ -175,7 +181,7 @@ mod tests {
 
         let grads = z.compute_gradients();
 
-        assert_eq!(grads.get_gradient(&x), 2.0);
+        assert_eq!(grads.get_gradient(&x).unwrap(), 2.0);
     }
 
     #[test]
@@ -187,7 +193,7 @@ mod tests {
         assert!((z.value() - 1.0).abs() < 1e-6);
 
         let grads = z.compute_gradients();
-        assert!(grads.get_gradient(&x).abs() < 1e-6);
+        assert!((grads.get_gradient(&x).unwrap()).abs() < 1e-6);
     }
 
     #[test]
@@ -200,7 +206,10 @@ mod tests {
 
         let grads = z.compute_gradients();
 
-        assert_eq!(grads.get_gradient(&x), -1.0 / (x.value() * x.value()));
+        assert_eq!(
+            grads.get_gradient(&x).unwrap(),
+            -1.0 / (x.value() * x.value())
+        );
     }
 
     #[test]
@@ -215,8 +224,8 @@ mod tests {
 
         let grads = z.compute_gradients();
 
-        let grad_x = grads.get_gradient(&x);
-        let grad_y = grads.get_gradient(&y);
+        let grad_x = grads.get_gradient(&x).unwrap();
+        let grad_y = grads.get_gradient(&y).unwrap();
 
         let expected_grad_x = y.sin().value();
         let expected_grad_y = (x.value() + y.value()) * y.value().cos() + y.value().sin();
@@ -253,7 +262,7 @@ mod tests {
         ];
 
         assert_eq!(
-            grads.get_gradients(&[x0, x1, x2, x3, x4]),
+            grads.get_gradients(&[x0, x1, x2, x3, x4]).unwrap(),
             EXPECTED_GRADIENTS
         );
     }
@@ -268,7 +277,7 @@ mod tests {
         assert!((z.value() - 8.0_f64).abs() < EPSILON);
 
         let grads = z.compute_gradients();
-        assert!((grads.get_gradient(&x) - 12.0).abs() < EPSILON);
+        assert!((grads.get_gradient(&x).unwrap() - 12.0).abs() < EPSILON);
     }
 
     #[test]
@@ -280,7 +289,7 @@ mod tests {
         assert!((z.value() - f64::exp(1.0)).abs() < EPSILON);
 
         let grads = z.compute_gradients();
-        assert!((grads.get_gradient(&x) - z.value()).abs() < EPSILON);
+        assert!((grads.get_gradient(&x).unwrap() - z.value()).abs() < EPSILON);
     }
 
     #[test]
@@ -292,7 +301,7 @@ mod tests {
         assert!((z.value() - 2.0_f64).abs() < EPSILON);
 
         let grads = z.compute_gradients();
-        assert!((grads.get_gradient(&x) - 0.25).abs() < EPSILON);
+        assert!((grads.get_gradient(&x).unwrap() - 0.25).abs() < EPSILON);
     }
 
     #[test]
@@ -304,7 +313,7 @@ mod tests {
         assert!((z.value() - 1.0_f64).abs() < EPSILON);
 
         let grads = z.compute_gradients();
-        assert!((grads.get_gradient(&x) - 0.0).abs() < EPSILON);
+        assert!((grads.get_gradient(&x).unwrap() - 0.0).abs() < EPSILON);
     }
 
     #[test]
@@ -316,7 +325,7 @@ mod tests {
         assert!((z.value() - 0.0_f64).abs() < EPSILON);
 
         let grads = z.compute_gradients();
-        assert!((grads.get_gradient(&x) - 1.0).abs() < EPSILON);
+        assert!((grads.get_gradient(&x).unwrap() - 1.0).abs() < EPSILON);
     }
 
     #[test]
@@ -328,7 +337,7 @@ mod tests {
         assert!((z.value() - 0.0_f64).abs() < EPSILON);
 
         let grads = z.compute_gradients();
-        assert!((grads.get_gradient(&x) - 1.0).abs() < EPSILON);
+        assert!((grads.get_gradient(&x).unwrap() - 1.0).abs() < EPSILON);
     }
 
     #[test]
@@ -340,7 +349,7 @@ mod tests {
         assert!((z.value() - 1.0_f64).abs() < EPSILON);
 
         let grads = z.compute_gradients();
-        assert!((grads.get_gradient(&x) - 0.0).abs() < EPSILON);
+        assert!((grads.get_gradient(&x).unwrap() - 0.0).abs() < EPSILON);
     }
 
     #[test]
@@ -352,7 +361,7 @@ mod tests {
         assert!((z.value() - 0.0_f64).abs() < EPSILON);
 
         let grads = z.compute_gradients();
-        assert!((grads.get_gradient(&x) - 1.0).abs() < EPSILON);
+        assert!((grads.get_gradient(&x).unwrap() - 1.0).abs() < EPSILON);
     }
 
     #[test]
@@ -372,7 +381,7 @@ mod tests {
 
         let expected_grad_x = 3.0 * (x.value() + y.value()).powf(2.0) * x.exp().value() + z.value();
 
-        assert!((grads.get_gradient(&x) - expected_grad_x).abs() < EPSILON);
+        assert!((grads.get_gradient(&x).unwrap() - expected_grad_x).abs() < EPSILON);
     }
 
     #[test]
@@ -387,7 +396,7 @@ mod tests {
 
         let grads = x.compute_gradients();
 
-        assert_eq!(grads.get_gradient(&x), 1.0);
+        assert_eq!(grads.get_gradient(&x).unwrap(), 1.0);
     }
 
     #[test]
@@ -404,8 +413,8 @@ mod tests {
 
         let grads = x.compute_gradients();
 
-        assert_eq!(grads.get_gradient(&x), 1.0);
-        assert_eq!(grads.get_gradient(&y), 2.0);
+        assert_eq!(grads.get_gradient(&x).unwrap(), 1.0);
+        assert_eq!(grads.get_gradient(&y).unwrap(), 2.0);
     }
 
     #[test]
@@ -420,7 +429,7 @@ mod tests {
 
         let grads = x.compute_gradients();
 
-        assert_eq!(grads.get_gradient(&x), 1.0);
+        assert_eq!(grads.get_gradient(&x).unwrap(), 1.0);
     }
 
     #[test]
@@ -437,8 +446,8 @@ mod tests {
 
         let grads = x.compute_gradients();
 
-        assert_eq!(grads.get_gradient(&x), 1.0);
-        assert_eq!(grads.get_gradient(&y), -2.0);
+        assert_eq!(grads.get_gradient(&x).unwrap(), 1.0);
+        assert_eq!(grads.get_gradient(&y).unwrap(), -2.0);
     }
 
     #[test]
@@ -453,7 +462,7 @@ mod tests {
 
         let grads = x.compute_gradients();
 
-        assert_eq!(grads.get_gradient(&x), 1.0);
+        assert_eq!(grads.get_gradient(&x).unwrap(), 1.0);
     }
 
     #[test]
@@ -470,8 +479,8 @@ mod tests {
 
         let grads = x.compute_gradients();
 
-        assert_eq!(grads.get_gradient(&x), 1.0);
-        assert_eq!(grads.get_gradient(&y), 2.0 * x.value() / y.value());
+        assert_eq!(grads.get_gradient(&x).unwrap(), 1.0);
+        assert_eq!(grads.get_gradient(&y).unwrap(), 2.0 * x.value() / y.value());
     }
 
     #[test]
@@ -485,7 +494,7 @@ mod tests {
         assert_eq!(x.value(), 2.0);
 
         let grads = x.compute_gradients();
-        assert!((grads.get_gradient(&x) - 1.0).abs() < EPSILON);
+        assert!((grads.get_gradient(&x).unwrap() - 1.0).abs() < EPSILON);
     }
 
     #[test]
@@ -505,8 +514,8 @@ mod tests {
         let expected_dx = 1.0;
         let expected_dy = -2.0 * 10.0 / (y.value().powi(3));
 
-        assert!((grads.get_gradient(&x) - expected_dx).abs() < EPSILON);
-        assert!((grads.get_gradient(&y) - expected_dy).abs() < EPSILON);
+        assert!((grads.get_gradient(&x).unwrap() - expected_dx).abs() < EPSILON);
+        assert!((grads.get_gradient(&y).unwrap() - expected_dy).abs() < EPSILON);
     }
 
     #[test]
@@ -516,7 +525,7 @@ mod tests {
 
         let z = 2 * x + y;
         let grads = z.compute_gradients();
-        let res = grads.get_gradients(&[x, y]);
+        let res = grads.get_gradients(&[x, y]).unwrap();
         assert_eq!(res, [2, 1]);
     }
 
@@ -527,7 +536,7 @@ mod tests {
 
         let z = 2 * x + y;
         let grads = z.compute_gradients();
-        let res = grads.get_gradients(&[x, y]);
+        let res = grads.get_gradients(&[x, y]).unwrap();
         assert_eq!(res, [2, 1]);
     }
 
@@ -538,7 +547,7 @@ mod tests {
 
         let z = 2 * x + y;
         let grads = z.compute_gradients();
-        let res = grads.get_gradients(&[x, y]);
+        let res = grads.get_gradients(&[x, y]).unwrap();
         assert_eq!(res, [2, 1]);
     }
 
@@ -549,7 +558,7 @@ mod tests {
 
         let z = 2 * x + y;
         let grads = z.compute_gradients();
-        let res = grads.get_gradients(&[x, y]);
+        let res = grads.get_gradients(&[x, y]).unwrap();
         assert_eq!(res, [2, 1]);
     }
 
@@ -560,7 +569,7 @@ mod tests {
 
         let z = 2 * x + y;
         let grads = z.compute_gradients();
-        let res = grads.get_gradients(&[x, y]);
+        let res = grads.get_gradients(&[x, y]).unwrap();
         assert_eq!(res, [2, 1]);
     }
 
@@ -571,7 +580,7 @@ mod tests {
 
         let z = 2 * x + y;
         let grads = z.compute_gradients();
-        let res = grads.get_gradients(&[x, y]);
+        let res = grads.get_gradients(&[x, y]).unwrap();
         assert_eq!(res, [2, 1]);
     }
 
@@ -582,7 +591,7 @@ mod tests {
 
         let z = 2 * x + y;
         let grads = z.compute_gradients();
-        let res = grads.get_gradients(&[x, y]);
+        let res = grads.get_gradients(&[x, y]).unwrap();
         assert_eq!(res, [2, 1]);
     }
 
@@ -593,7 +602,7 @@ mod tests {
 
         let z = 2 * x + y;
         let grads = z.compute_gradients();
-        let res = grads.get_gradients(&[x, y]);
+        let res = grads.get_gradients(&[x, y]).unwrap();
         assert_eq!(res, [2, 1]);
     }
 
@@ -604,7 +613,7 @@ mod tests {
 
         let z = 2 * x + y;
         let grads = z.compute_gradients();
-        let res = grads.get_gradients(&[x, y]);
+        let res = grads.get_gradients(&[x, y]).unwrap();
         assert_eq!(res, [2, 1]);
     }
 
@@ -615,7 +624,7 @@ mod tests {
 
         let z = 2 * x + y;
         let grads = z.compute_gradients();
-        let res = grads.get_gradients(&[x, y]);
+        let res = grads.get_gradients(&[x, y]).unwrap();
         assert_eq!(res, [2, 1]);
     }
 
@@ -626,7 +635,7 @@ mod tests {
 
         let z = 2 * x + y;
         let grads = z.compute_gradients();
-        let res = grads.get_gradients(&[x, y]);
+        let res = grads.get_gradients(&[x, y]).unwrap();
         assert_eq!(res, [2, 1]);
     }
 
@@ -637,7 +646,7 @@ mod tests {
 
         let z = 2 * x + y;
         let grads = z.compute_gradients();
-        let res = grads.get_gradients(&[x, y]);
+        let res = grads.get_gradients(&[x, y]).unwrap();
         assert_eq!(res, [2, 1]);
     }
 }

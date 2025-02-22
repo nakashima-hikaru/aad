@@ -18,7 +18,7 @@ fn main() {
     let w = g(x, y, z);
     let grads = w.compute_gradients();
 
-    let [dx, dy, dz] = grads.get_gradients(&[x, y, z]);
+    let [dx, dy, dz] = grads.get_gradients(&[x, y, z]).unwrap();
     assert_eq!(dx, 3.0 * x.value().powi(2) * y.value().sin());
     assert_eq!(dy, x.value().powi(3) * y.value().cos());
     assert_eq!(dz, z.value().recip());

@@ -13,6 +13,6 @@ fn main() {
     let y = f(&x);
     let grads = y.compute_gradients();
 
-    let dx = grads.get_gradients(&x);
+    let dx = grads.get_gradients(&x).unwrap();
     assert_eq!(dx, [1.0, 0.0, 0.0]);
 }
