@@ -46,7 +46,7 @@ macro_rules! impl_scalar_mul {
                             let count = operations.len();
                             operations.push(OperationRecord([
                                 (*i, Variable::constant(rhs)),
-                                (usize::MAX, Variable::zero().value),
+                                (usize::MAX, Variable::zero()),
                             ]));
                             Some((count, tape))
                         },
