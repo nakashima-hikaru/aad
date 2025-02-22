@@ -1,5 +1,4 @@
 use RustQuant_autodiff::{Accumulate, Graph};
-use aad::FloatLike;
 use aad::tape::Tape;
 use aad_derive::autodiff;
 use criterion::{Criterion, criterion_group, criterion_main};
