@@ -9,10 +9,7 @@ pub enum GradientError {
 
 pub struct Gradients<F>(pub(crate) Vec<F>);
 
-impl<F: Copy> Gradients<F>
-where
-    Vec<F>: FromIterator<F>,
-{
+impl<F: Copy> Gradients<F> {
     #[inline]
     /// Returns the gradient for the given variable.
     ///

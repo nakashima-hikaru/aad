@@ -1,5 +1,4 @@
 use crate::{FloatLike, variable::Variable};
-use std::cmp::Ordering;
 
 impl From<Variable<'_, f64>> for f64 {
     fn from(value: Variable<'_, f64>) -> Self {
@@ -10,133 +9,6 @@ impl From<Variable<'_, f64>> for f64 {
 impl From<Variable<'_, Variable<'_, f64>>> for f64 {
     fn from(value: Variable<'_, Variable<'_, f64>>) -> Self {
         value.value.value
-    }
-}
-
-impl FloatLike<f64> for Variable<'_, f64> {
-    #[inline]
-    fn sin(self) -> Self {
-        self.sin()
-    }
-
-    #[inline]
-    fn cos(self) -> Self {
-        self.cos()
-    }
-
-    #[inline]
-    fn tan(self) -> Self {
-        self.tan()
-    }
-
-    #[inline]
-    fn sinh(self) -> Self {
-        self.sinh()
-    }
-
-    #[inline]
-    fn cosh(self) -> Self {
-        self.cosh()
-    }
-
-    #[inline]
-    fn tanh(self) -> Self {
-        self.tanh()
-    }
-
-    #[inline]
-    fn ln(self) -> Self {
-        self.ln()
-    }
-
-    #[inline]
-    fn log(self, base: f64) -> Self {
-        self.log(base)
-    }
-
-    #[inline]
-    fn log2(self) -> Self {
-        self.log2()
-    }
-
-    #[inline]
-    fn log10(self) -> Self {
-        self.log10()
-    }
-
-    #[inline]
-    fn exp(self) -> Self {
-        self.exp()
-    }
-
-    #[inline]
-    fn exp2(self) -> Self {
-        self.exp2()
-    }
-
-    #[inline]
-    fn powf(self, exponent: f64) -> Self {
-        self.powf(exponent)
-    }
-
-    #[inline]
-    fn powi(self, exponent: i32) -> Self {
-        self.powi(exponent)
-    }
-
-    #[inline]
-    fn sqrt(self) -> Self {
-        self.sqrt()
-    }
-
-    #[inline]
-    fn cbrt(self) -> Self {
-        self.cbrt()
-    }
-
-    #[inline]
-    fn recip(self) -> Self {
-        self.recip()
-    }
-
-    #[inline]
-    fn abs(self) -> Self {
-        self.abs()
-    }
-
-    #[inline]
-    fn asin(self) -> Self {
-        self.asin()
-    }
-
-    #[inline]
-    fn acos(self) -> Self {
-        self.acos()
-    }
-
-    #[inline]
-    fn atan(self) -> Self {
-        self.atan()
-    }
-
-    #[inline]
-    fn asinh(self) -> Self {
-        self.asinh()
-    }
-
-    #[inline]
-    fn acosh(self) -> Self {
-        self.acosh()
-    }
-
-    #[inline]
-    fn atanh(self) -> Self {
-        self.atanh()
-    }
-
-    #[inline]
-    fn hypot(self, other: Self) -> Self {
-        self.hypot(other)
     }
 }
 
@@ -198,9 +70,7 @@ impl<F: FloatLike<f64>> Variable<'_, F> {
     #[inline]
     #[must_use]
     pub fn cbrt(self) -> Self {
-        self.apply_unary_function(F::cbrt, |x| {
-            x.powf(-(f64::from(2) / f64::from(3))) / f64::from(3)
-        })
+        self.apply_unary_function(F::cbrt, |x| x.powf(-2.0 / 3.0) / 3.0)
     }
 
     #[inline]
@@ -298,146 +168,114 @@ impl<F: FloatLike<f64>> Variable<'_, F> {
     }
 }
 
-impl FloatLike<f64> for Variable<'_, Variable<'_, f64>> {
-    #[inline]
-    fn sin(self) -> Self {
-        self.sin()
-    }
-
-    #[inline]
-    fn cos(self) -> Self {
-        self.cos()
-    }
-
-    #[inline]
-    fn tan(self) -> Self {
-        self.tan()
-    }
-
-    #[inline]
-    fn sinh(self) -> Self {
-        self.sinh()
-    }
-
-    #[inline]
-    fn cosh(self) -> Self {
-        self.cosh()
-    }
-
-    #[inline]
-    fn tanh(self) -> Self {
-        self.tanh()
-    }
-
-    #[inline]
-    fn ln(self) -> Self {
-        self.ln()
-    }
-
-    #[inline]
-    fn log(self, base: f64) -> Self {
-        self.log(base)
-    }
-
-    #[inline]
-    fn log2(self) -> Self {
-        self.log2()
-    }
-
-    #[inline]
-    fn log10(self) -> Self {
-        self.log10()
-    }
-
-    #[inline]
-    fn exp(self) -> Self {
-        self.exp()
-    }
-
-    #[inline]
-    fn exp2(self) -> Self {
-        self.exp2()
-    }
-
-    #[inline]
-    fn powf(self, exponent: f64) -> Self {
-        self.powf(exponent)
-    }
-
-    #[inline]
-    fn powi(self, exponent: i32) -> Self {
-        self.powi(exponent)
-    }
-
-    #[inline]
-    fn sqrt(self) -> Self {
-        self.sqrt()
-    }
-
-    #[inline]
-    fn cbrt(self) -> Self {
-        self.cbrt()
-    }
-
-    #[inline]
-    fn recip(self) -> Self {
-        self.recip()
-    }
-
-    #[inline]
-    fn abs(self) -> Self {
-        self.abs()
-    }
-
-    #[inline]
-    fn asin(self) -> Self {
-        self.asin()
-    }
-
-    #[inline]
-    fn acos(self) -> Self {
-        self.acos()
-    }
-
-    #[inline]
-    fn atan(self) -> Self {
-        self.atan()
-    }
-
-    #[inline]
-    fn asinh(self) -> Self {
-        self.asinh()
-    }
-
-    #[inline]
-    fn acosh(self) -> Self {
-        self.acosh()
-    }
-
-    #[inline]
-    fn atanh(self) -> Self {
-        self.atanh()
-    }
-
-    #[inline]
-    fn hypot(self, other: Self) -> Self {
-        self.hypot(other)
-    }
+macro_rules! impl_float_like {
+    ($t:ty, $scalar:ty) => {
+        impl FloatLike<$scalar> for $t {
+            #[inline]
+            fn sin(self) -> Self {
+                self.sin()
+            }
+            #[inline]
+            fn cos(self) -> Self {
+                self.cos()
+            }
+            #[inline]
+            fn tan(self) -> Self {
+                self.tan()
+            }
+            #[inline]
+            fn sinh(self) -> Self {
+                self.sinh()
+            }
+            #[inline]
+            fn cosh(self) -> Self {
+                self.cosh()
+            }
+            #[inline]
+            fn tanh(self) -> Self {
+                self.tanh()
+            }
+            #[inline]
+            fn ln(self) -> Self {
+                self.ln()
+            }
+            #[inline]
+            fn log(self, base: $scalar) -> Self {
+                self.log(base)
+            }
+            #[inline]
+            fn log2(self) -> Self {
+                self.log2()
+            }
+            #[inline]
+            fn log10(self) -> Self {
+                self.log10()
+            }
+            #[inline]
+            fn exp(self) -> Self {
+                self.exp()
+            }
+            #[inline]
+            fn exp2(self) -> Self {
+                self.exp2()
+            }
+            #[inline]
+            fn powf(self, exponent: $scalar) -> Self {
+                self.powf(exponent)
+            }
+            #[inline]
+            fn powi(self, exponent: i32) -> Self {
+                self.powi(exponent)
+            }
+            #[inline]
+            fn sqrt(self) -> Self {
+                self.sqrt()
+            }
+            #[inline]
+            fn cbrt(self) -> Self {
+                self.cbrt()
+            }
+            #[inline]
+            fn recip(self) -> Self {
+                self.recip()
+            }
+            #[inline]
+            fn abs(self) -> Self {
+                self.abs()
+            }
+            #[inline]
+            fn asin(self) -> Self {
+                self.asin()
+            }
+            #[inline]
+            fn acos(self) -> Self {
+                self.acos()
+            }
+            #[inline]
+            fn atan(self) -> Self {
+                self.atan()
+            }
+            #[inline]
+            fn asinh(self) -> Self {
+                self.asinh()
+            }
+            #[inline]
+            fn acosh(self) -> Self {
+                self.acosh()
+            }
+            #[inline]
+            fn atanh(self) -> Self {
+                self.atanh()
+            }
+            #[inline]
+            fn hypot(self, other: Self) -> Self {
+                self.hypot(other)
+            }
+        }
+    };
 }
 
-impl<T, F: PartialOrd<T>> PartialOrd<T> for Variable<'_, F>
-where
-    Self: PartialEq<T>,
-{
-    #[inline]
-    fn partial_cmp(&self, other: &T) -> Option<Ordering> {
-        self.value.partial_cmp(other)
-    }
-}
-
-impl<T, F: PartialEq<T>> PartialEq<T> for Variable<'_, F> {
-    #[inline]
-    fn eq(&self, other: &T) -> bool {
-        self.value == *other
-    }
-}
+impl_float_like!(f32, f32);
+impl_float_like!(f64, f64);
+impl_float_like!(Variable<'_, f64>, f64);
+impl_float_like!(Variable<'_, Variable<'_, f64>>, f64);

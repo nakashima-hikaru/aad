@@ -4,29 +4,6 @@ use std::{
     ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign},
 };
 
-macro_rules! impl_math_fn {
-    ($method:ident) => {
-        #[inline]
-        fn $method(self) -> Self {
-            Self::$method(self)
-        }
-    };
-
-    ($method:ident, $param:ty) => {
-        #[inline]
-        fn $method(self, param: $param) -> Self {
-            Self::$method(self, param)
-        }
-    };
-
-    ($method:ident, $param1:ty, $param2:ty) => {
-        #[inline]
-        fn $method(self, param1: $param1, param2: $param2) -> Self {
-            Self::$method(self, param1, param2)
-        }
-    };
-}
-
 pub trait FloatLike<Scalar>:
     Neg<Output = Self>
     + Add<Output = Self>
@@ -131,38 +108,3 @@ pub trait FloatLike<Scalar>:
     #[must_use]
     fn hypot(self, other: Self) -> Self;
 }
-
-macro_rules! impl_scalar_like_inner {
-    ($primitive:ty) => {
-        impl FloatLike<$primitive> for $primitive {
-            impl_math_fn!(sin);
-            impl_math_fn!(cos);
-            impl_math_fn!(tan);
-            impl_math_fn!(sinh);
-            impl_math_fn!(cosh);
-            impl_math_fn!(tanh);
-            impl_math_fn!(ln);
-            impl_math_fn!(log, $primitive);
-            impl_math_fn!(log2);
-            impl_math_fn!(log10);
-            impl_math_fn!(exp);
-            impl_math_fn!(exp2);
-            impl_math_fn!(powi, i32);
-            impl_math_fn!(powf, $primitive);
-            impl_math_fn!(sqrt);
-            impl_math_fn!(cbrt);
-            impl_math_fn!(recip);
-            impl_math_fn!(abs);
-            impl_math_fn!(asin);
-            impl_math_fn!(acos);
-            impl_math_fn!(atan);
-            impl_math_fn!(asinh);
-            impl_math_fn!(acosh);
-            impl_math_fn!(atanh);
-            impl_math_fn!(hypot, Self);
-        }
-    };
-}
-
-impl_scalar_like_inner!(f32);
-impl_scalar_like_inner!(f64);

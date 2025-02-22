@@ -1,3 +1,4 @@
+use std::cmp::Ordering;
 use std::ops::{Add, Mul};
 
 use crate::gradients::{GradientError, Gradients};
@@ -276,6 +277,24 @@ impl<F: From<f32>> From<f32> for Variable<'_, F> {
         Self::constant(F::from(value))
     }
 }
+
+impl<T, F: PartialOrd<T>> PartialOrd<T> for Variable<'_, F>
+where
+    Self: PartialEq<T>,
+{
+    #[inline]
+    fn partial_cmp(&self, other: &T) -> Option<Ordering> {
+        self.value.partial_cmp(other)
+    }
+}
+
+impl<T, F: PartialEq<T>> PartialEq<T> for Variable<'_, F> {
+    #[inline]
+    fn eq(&self, other: &T) -> bool {
+        self.value == *other
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
