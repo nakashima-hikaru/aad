@@ -25,7 +25,7 @@ Add to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-aad = { version = "0.8.0", features = ["derive"] }
+aad = { version = "0.9.0", features = ["derive"] }
 ```
 
 ## Usage
