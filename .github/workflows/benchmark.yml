@@ -32,9 +32,15 @@ jobs:
         run: cargo install cargo-criterion
 
       - name: Run benchmarks
-        run: cargo criterion --features benchmarks
+        run: |
+          if [[ "${{ runner.os }}" == "Windows" ]]; then
+            cargo criterion --features benchmarks -- --noplot --test
+          else
+            cargo criterion --features benchmarks
+          fi
 
       - name: Deploy Benchmark Results to GitHub Pages
+        if: matrix.os != 'windows-latest'
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
